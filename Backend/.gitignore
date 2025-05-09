@@ -1,0 +1,5 @@
+# Bỏ qua folder thư viện (cài lại bằng npm i)
+/node_modules
+
+# Bỏ qua file biến môi trường
+*.env
