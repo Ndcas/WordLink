@@ -1,4 +1,4 @@
-Thư viện hiện có ở Backend: express, ejs, js-sha256, mysql2, dotenv, sequelize, node-cache, nodemailer
+Thư viện hiện có ở Backend: express, ejs, js-sha256, mysql2, dotenv, sequelize, node-cache, nodemailer, jsonwebtoken
 
 Thư viện hiện có ở Frontend: react-navigation, expo-sqlite
 

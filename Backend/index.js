@@ -14,7 +14,7 @@ app.use(express.json());
 
 app.use('/', testRouter);
 
-let port = process.env.APP_PORT || 8080;
+let port = process.env.APP_PORT;
 
 app.listen(port, () => {
     console.log(`Listening on port ${port}`);

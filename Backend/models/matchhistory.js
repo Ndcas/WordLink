@@ -1,0 +1,42 @@
+const { DataTypes } = require('sequelize');
+const sequelize = require('../services/database');
+
+const MatchHistory = sequelize.define('MatchHistory', {
+    MID: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    AID1: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'Account',
+            key: 'AID'
+        }
+    },
+    AID2: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: 'Account',
+            key: 'AID'
+        }
+    },
+    ScoreD: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    Result: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+    },
+    MTime: {
+        type: DataTypes.DATE,
+        allowNull: false
+    }
+}, {
+    tableName: 'MatchHistory',
+    timestamps: false,
+});
+
+module.exports = MatchHistory;
