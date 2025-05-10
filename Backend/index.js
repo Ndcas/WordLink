@@ -1,22 +1,21 @@
 const express = require('express');
-const bodyParser = require('body-parser');
-const dotenv = require('dotenv');
+require('dotenv').config();
 const testRouter = require('./routers/test');
-
-dotenv.config();
 
 const app = express();
 
 app.set('view engine', 'ejs');
 
-app.use(bodyParser.urlencoded({
+app.use(express.urlencoded({
     extended: true
 }));
 
-app.use(bodyParser.json());
+app.use(express.json());
 
 app.use('/', testRouter);
 
-app.listen(process.env.PORT, () => {
-    console.log('Listening on port', process.env.PORT);
-})
+let port = process.env.APP_PORT || 8080;
+
+app.listen(port, () => {
+    console.log(`Listening on port ${port}`);
+});
