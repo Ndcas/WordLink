@@ -1,22 +1,22 @@
 const { sha256 } = require('js-sha256');
 const jsonwebtoken = require('jsonwebtoken');
 
-let secretKey = process.env.SECRET_KEY;
-let refreshKey = process.env.REFRESH_KEY;
-let secretTTL = process.env.SECRET_TTL;
-let refreshTTL = process.env.REFRESH_TTL;
+const secretKey = process.env.SECRET_KEY;
+const refreshKey = process.env.REFRESH_KEY;
+const secretTTL = process.env.SECRET_TTL;
+const refreshTTL = process.env.REFRESH_TTL;
 
 function hash(string) {
     return sha256(string);
 }
 
-function sign(payload) {
+function signAccessToken(payload) {
     return jsonwebtoken.sign(payload, secretKey, {
         expiresIn: secretTTL
     });
 }
 
-function verifyJWT(token) {
+function verifyAccessToken(token) {
     try {
         return jsonwebtoken.verify(token, secretKey);
     } catch (error) {
@@ -24,13 +24,13 @@ function verifyJWT(token) {
     }
 }
 
-function signRefresh(payload) {
+function signRefreshToken(payload) {
     return jsonwebtoken.sign(payload, refreshKey, {
         expiresIn: refreshTTL
     });
 }
 
-function verifyRefresh(token) {
+function verifyRefreshToken(token) {
     try {
         return jsonwebtoken.verify(token, refreshKey);
     } catch (error) {
@@ -38,4 +38,4 @@ function verifyRefresh(token) {
     }
 }
 
-module.exports = { sign, verifyJWT, signRefresh, verifyRefresh, hash };
+module.exports = { signAccessToken, verifyAccessToken, signRefreshToken, verifyRefreshToken, hash };

@@ -1,18 +1,4 @@
-const cacheClient = require('./cache');
-
-let apiKey = process.env.API_KEY;
-
-function verifyIpaAndWord(ipa, word) {
-    if (!ipa || !word) {
-        throw new Error('Thiếu thông tin đầu vào');
-    }
-    if (typeof ipa !== 'string' || typeof word !== 'string' || ipa.includes(' ') || word.includes(' ')) {
-        throw new Error('Thông tin đầu vào không hợp lệ');
-    }
-    if (ipa.length > 50 || word.length > 50) {
-        throw new Error('Thông tin đầu vào quá dài');
-    }
-}
+const apiKey = process.env.API_KEY;
 
 function normalizeIPA(ipa) {
     result = ipa.replaceAll('/', '');
@@ -35,15 +21,6 @@ function normalizeIPA(ipa) {
 }
 
 async function explainPronunciation(ipa, word) {
-    try {
-        verifyIpaAndWord(ipa, word);
-    } catch (error) {
-        throw error;
-    }
-    let result = cacheClient.get(`explainedPronunciation:${ipa}:${word}`);
-    if (result) {
-        return result;
-    }
     let url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
     let headers = {
         'Content-Type': 'application/json',
@@ -66,7 +43,6 @@ async function explainPronunciation(ipa, word) {
             throw new Error('Gemini API trả về lỗi', result.statusText);
         }
         result = (await result.json()).candidates[0].content.parts[0].text;
-        cacheClient.set(`explainedPronunciation:${ipa}:${word}`, result);
         return result;
     } catch (error) {
         throw new Error('Không thể kết nối Gemini API', error);
@@ -74,15 +50,6 @@ async function explainPronunciation(ipa, word) {
 }
 
 async function pronounceWord(ipa, word) {
-    try {
-        verifyIpaAndWord(ipa, word);
-    } catch (error) {
-        throw error;
-    }
-    let result = cacheClient.get(`pronouncedWord:${ipa}:${word}`);
-    if (result) {
-        return result;
-    }
     ipa = normalizeIPA(ipa);
     let url = 'https://texttospeech.googleapis.com/v1/text:synthesize';
     let headers = {
@@ -112,7 +79,6 @@ async function pronounceWord(ipa, word) {
             throw new Error('TTS API trả về lỗi', result.statusText);
         }
         result = (await result.json()).audioContent;
-        cacheClient.set(`pronouncedWord:${ipa}:${word}`, result);
         return result;
     } catch (error) {
         throw new Error('Không thể kết nối TTS API', error);

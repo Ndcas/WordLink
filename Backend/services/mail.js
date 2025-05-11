@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
-let appEmail = process.env.APP_EMAIL;
-let appEmailPassword = process.env.APP_EMAIL_PASSWORD;
+const appEmail = process.env.APP_EMAIL;
+const appEmailPassword = process.env.APP_EMAIL_PASSWORD;
 
 const transporter = nodemailer.createTransport({
     service: 'gmail',
@@ -21,7 +21,7 @@ async function sendEmail(to, subject, html) {
         });
 
     } catch (error) {
-        console.error('Cannot send email', error);
+        throw error;
     }
 }
 
