@@ -10,7 +10,10 @@ const Account = sequelize.define('Account', {
     Username: {
         type: DataTypes.STRING(200),
         allowNull: false,
-        unique: true
+        unique: true,
+        validate: {
+            len: [3, 50]
+        }
     },
     APassword: {
         type: DataTypes.STRING(64),

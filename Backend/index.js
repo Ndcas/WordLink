@@ -1,6 +1,7 @@
 const express = require('express');
 require('dotenv').config();
 const testRouter = require('./routers/test');
+const accountRouter = require('./routers/account');
 
 const app = express();
 
@@ -13,6 +14,8 @@ app.use(express.urlencoded({
 app.use(express.json());
 
 app.use('/', testRouter);
+
+app.use('/account', accountRouter);
 
 let port = process.env.APP_PORT;
 

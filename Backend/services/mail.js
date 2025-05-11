@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, html) {
     try {
         await transporter.sendMail({
-            from: appEmail,
+            from: `WordLink <${appEmail}>`,
             to: to,
             subject: subject,
             html: html
