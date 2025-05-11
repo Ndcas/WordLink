@@ -35,7 +35,7 @@ const WordMeaning = sequelize.define('WordMeaning', {
     }
 }, {
     tableName: 'WordMeaning',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = WordMeaning;

@@ -22,7 +22,7 @@ const Bookmark = sequelize.define('Bookmark', {
     }
 }, {
     tableName: 'Bookmark',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = Bookmark;

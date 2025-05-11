@@ -24,19 +24,20 @@ const MatchHistory = sequelize.define('MatchHistory', {
     },
     ScoreD: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: false
     },
     Result: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: false
     },
     MTime: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: 'MatchHistory',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = MatchHistory;

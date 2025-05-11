@@ -5,19 +5,21 @@ const Account = sequelize.define('Account', {
     AID: {
         type: DataTypes.INTEGER,
         primaryKey: true,
-        autoIncrement: true,
+        autoIncrement: true
     },
     Username: {
         type: DataTypes.STRING(200),
         allowNull: false,
+        unique: true
     },
     APassword: {
         type: DataTypes.STRING(64),
-        allowNull: false,
+        allowNull: false
     },
     Email: {
         type: DataTypes.STRING(500),
         allowNull: false,
+        unique: true,
         validate: {
             isEmail: true,
         }
@@ -25,21 +27,25 @@ const Account = sequelize.define('Account', {
     Role: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: 0
     },
     Status: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        defaultValue: 0,
+        defaultValue: 1
     },
     Score: {
         type: DataTypes.INTEGER,
         allowNull: false,
         defaultValue: 0,
+        validate: {
+            isInt: true,
+            min: 0,
+        }
     }
 }, {
     tableName: 'Account',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = Account;

@@ -25,11 +25,12 @@ const WordHistory = sequelize.define('WordHistory', {
     },
     UseTime: {
         type: DataTypes.DATE,
-        allowNull: false
+        allowNull: false,
+        defaultValue: DataTypes.NOW
     }
 }, {
     tableName: 'WordHistory',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = WordHistory;

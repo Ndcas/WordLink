@@ -9,11 +9,11 @@ const PartOfSpeech = sequelize.define('PartOfSpeech', {
     },
     POSName: {
         type: DataTypes.STRING(30),
-        allowNull: false,
+        allowNull: false
     }
 }, {
     tableName: 'PartOfSpeech',
-    timestamps: false,
+    timestamps: false
 });
 
 module.exports = PartOfSpeech;
