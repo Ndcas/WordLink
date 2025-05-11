@@ -3,8 +3,6 @@ const nodemailer = require('nodemailer');
 let appEmail = process.env.APP_EMAIL;
 let appEmailPassword = process.env.APP_EMAIL_PASSWORD;
 
-console.log(appEmail, appEmailPassword);
-
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
