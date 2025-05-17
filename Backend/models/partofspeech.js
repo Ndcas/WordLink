@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const PartOfSpeech = sequelize.define('PartOfSpeech', {
+const PartOfSpeech = db.define('PartOfSpeech', {
     POSID: {
         type: DataTypes.INTEGER,
         primaryKey: true,

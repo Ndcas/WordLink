@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const Account = sequelize.define('Account', {
+const Account = db.define('Account', {
     AID: {
         type: DataTypes.INTEGER,
         primaryKey: true,

@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const WordHistory = sequelize.define('WordHistory', {
+const WordHistory = db.define('WordHistory', {
     WHID: {
         type: DataTypes.INTEGER,
         primaryKey: true,

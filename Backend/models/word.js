@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const Word = sequelize.define('Word', {
+const Word = db.define('Word', {
     WordV: {
         type: DataTypes.STRING,
         primaryKey: true

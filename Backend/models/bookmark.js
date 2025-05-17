@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const Bookmark = sequelize.define('Bookmark', {
+const Bookmark = db.define('Bookmark', {
     AID: {
         type: DataTypes.INTEGER,
         allowNull: false,

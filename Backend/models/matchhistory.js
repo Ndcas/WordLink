@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const MatchHistory = sequelize.define('MatchHistory', {
+const MatchHistory = db.define('MatchHistory', {
     MID: {
         type: DataTypes.INTEGER,
         primaryKey: true,

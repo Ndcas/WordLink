@@ -18,10 +18,4 @@ router.post('/logIn', controller.logIn);
 // Cần refresh token trong header Authorization: 'Bearer [refresh token]'
 router.post('/quickLogIn', controller.quickLogIn);
 
-// Cần tham số username, password => token và refresh token
-// router.post('/logInAdmin', controller.logInAdmin);
-
-// Cần token trong header Authorization: 'Bearer [token]' và aid trong body
-// router.post('/suspend', controller.verifyAccessToken, controller.suspend);
-
 module.exports = router;

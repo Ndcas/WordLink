@@ -20,7 +20,7 @@ async function getOTP(req, res) {
         cacheClient.set(`otp:${email}`, number, 300);
         return res.status(200).json({ message: 'Mã xác thực đã được gửi đến email của bạn' });
     } catch (error) {
-        console.log(error);
+        console.log('Lỗi gửi OTP', error);
         return res.status(500).json({ error: 'Lỗi gửi email' });
     }
 }
@@ -131,6 +131,7 @@ async function logIn(req, res) {
             refreshToken: refreshToken
         });
     } catch (error) {
+        console.log('Lỗi đăng nhập', error);
         return res.status(500).json({ error: 'Lỗi hệ thống' });
     }
 }
@@ -160,64 +161,4 @@ async function quickLogIn(req, res) {
     });
 }
 
-async function logInAdmin(req, res) {
-    // let username = req.body.username;
-    // let password = req.body.password;
-    // if (!username || !password) {
-    //     return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
-    // }
-    // try {
-    //     let account = await Account.findOne({
-    //         where: {
-    //             Username: username,
-    //             APassword: authentication.hashPassword(password),
-    //             Role: 1,
-    //         }
-    //     });
-    //     if (!account) {
-    //         return res.status(404).json({ error: 'Tên tài khoản hoặc mật khẩu không đúng' });
-    //     }
-    //     if (account.Status === 0) {
-    //         return res.status(403).json({ error: `Tài khoản này đã bị khóa, vui lòng liên hệ ${appEmail} để kháng cáo` });
-    //     }
-    //     let payload = {
-    //         AID: account.AID,
-    //         Username: account.Username,
-    //         Role: 1
-    //     }
-    //     let accessToken = authentication.signAccessToken(payload);
-    //     let refreshToken = authentication.signRefreshToken(payload);
-    //     cacheClient.set(`refreshToken:${account.AID}`, refreshToken);
-    //     return res.status(200).json({
-    //         message: 'Đăng nhập thành công',
-    //         accessToken: accessToken,
-    //         refreshToken: refreshToken
-    //     });
-    // } catch (error) {
-    //     return res.status(500).json({ error: 'Lỗi hệ thống' });
-    // }
-}
-
-async function suspend(req, res) {
-    // if (!req.authorization || req.authorization.Role !== 1) {
-    //     return res.status(403).json({ error: 'Cần quyền admin' });
-    // }
-    // let aid = req.body.aid;
-    // try {
-    //     let account = await Account.findOne({
-    //         AID: aid
-    //     });
-    //     if (!account) {
-    //         return res.status(404).json({ error: 'Không tìm thấy tài khoản' });
-    //     }
-    //     cacheClient.del(`refreshToken:${aid}`);
-    //     account.Status = 0;
-    //     await account.save();
-    //     return res.status(200).json({ message: 'Khóa tài khoản thành công' });
-    // }
-    // catch (error) {
-    //     return res.status(500).json({ error: 'Lỗi server' });
-    // }
-}
-
-module.exports = { getOTP, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn, logInAdmin, suspend };
+module.exports = { getOTP, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn };

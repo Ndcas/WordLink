@@ -1,7 +1,7 @@
 const { DataTypes } = require('sequelize');
-const sequelize = require('../services/database');
+const db = require('../services/database');
 
-const WordMeaning = sequelize.define('WordMeaning', {
+const WordMeaning = db.define('WordMeaning', {
     WMID: {
         type: DataTypes.INTEGER,
         primaryKey: true,
