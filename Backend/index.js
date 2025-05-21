@@ -34,5 +34,5 @@ io.on('connection', (socket) => {
     gameHandler.connect(socket);
     gameHandler.playWithBot(socket);
     gameHandler.playWithPlayer(socket);
-    gameHandler.undexpectedDisconnection(socket);
+    gameHandler.unexpectedDisconnection(socket);
 });

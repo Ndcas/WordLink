@@ -38,6 +38,25 @@ function generateMatchID() {
     return matchID;
 }
 
+// Kiểm tra tính hợp lệ của từ
+async function verifyWord(word, usedWords) {
+    if (usedWords.includes(word)) {
+        return false;
+    }
+    if (usedWords.length >= 1) {
+        let oldWord = usedWords[usedWords.length - 1];
+        if (oldWord[oldWord.length - 1] !== word[0]) {
+            return false;
+        }
+    }
+    let wordInDB = await Word.findOne({
+        where: {
+            WordV: word
+        }
+    });
+    return wordInDB ? true : false;
+}
+
 // Xử lý thắng thua
 async function handleWinLose(matchID) {
     let player1 = matches[matchID].player1;
@@ -163,7 +182,7 @@ async function handleWinLose(matchID) {
                 newWords: newWords2
             }
         }
-        transaction.commit();
+        await transaction.commit();
         return result;
     } catch (error) {
         if (transaction) {
@@ -230,20 +249,11 @@ function playWithBot(socket) {
             socket.emit('invalid word', { error: 'Thiếu từ' });
             return;
         }
-        word = word.tolowerCase();
+        word = word.toLowerCase();
         try {
-            let wordInDB = await Word.findOne({
-                where: {
-                    WordV: word
-                }
-            });
-            if (!wordInDB) {
-                socket.emit('invalid word', { error: 'Từ không hợp lệ' });
-                return;
-            }
             let usedWords = matches[socket.data.matchID].usedWords;
-            if (usedWords.includes(word)) {
-                socket.emit('invalid word', { error: 'Từ đã được sử dụng' });
+            if (!(await verifyWord(word, usedWords))) {
+                socket.emit('invalid word', { error: 'Từ không hợp lệ' });
                 return;
             }
             usedWords.push(word);
@@ -255,7 +265,8 @@ function playWithBot(socket) {
             let count = await Word.count({
                 where: {
                     WordV: {
-                        [Op.notIn]: usedWords
+                        [Op.notIn]: usedWords,
+                        [Op.like]: `${word[word.length - 1]}%`
                     }
                 }
             });
@@ -263,7 +274,8 @@ function playWithBot(socket) {
                 let offset = Math.floor(Math.random() * count);
                 let wordToUse = Word.findOne({
                     where: {
-                        [Op.notIn]: usedWords
+                        [Op.notIn]: usedWords,
+                        [Op.like]: `${word[word.length - 1]}%`
                     },
                     offset: offset
                 });
@@ -301,6 +313,9 @@ function playWithBot(socket) {
             return;
         }
         let result = await handleWinLose(socket.data.matchID);
+        if (!result) {
+            return;
+        }
         if (result) {
             socket.emit('send match result', {
                 score: result.player1.score,
@@ -321,15 +336,43 @@ async function playWithPlayer(socket) {
 }
 
 // Xử lý khi người chơi ngắt kết nối đột ngột
-function undexpectedDisconnection(socket) {
+function unexpectedDisconnection(socket) {
     socket.on('disconnect', async () => {
         if (!socket.data.matchID) {
             return;
         }
-
-        // Chưa xong
-
+        let player1Socket = matches[socket.data.matchID].player1;
+        let player2Socket = matches[socket.data.matchID].player2;
+        let matchResult = await handleWinLose(socket.data.matchID);
+        if (!matchResult) {
+            if (player1Socket.id !== socket.id) {
+                player1Socket.emit('Lỗi xử lý thắng thua khi đối thủ ngắt kết nối');
+                disconnect(player1Socket);
+            } else if (player2Socket && player2Socket.id !== socket.id) {
+                player2Socket.emit('Lỗi xử lý thắng thua khi đối thủ ngắt kết nối');
+                disconnect(player2Socket);
+            }
+            return;
+        }
+        if (matchResult.player1.socket.id !== socket.id) {
+            matchResult.player1.socket.emit('send match result', {
+                score: matchResult.player1.score,
+                scoreD: matchResult.player1.scoreD,
+                result: matchResult.player1.result,
+                newWords: matchResult.player1.newWords
+            });
+            disconnect(matchResult.player1.socket);
+        }
+        if (matchResult.player2 && matchResult.player2.socket.id !== socket.id) {
+            matchResult.player2.socket.emit('send match result', {
+                score: matchResult.player2.score,
+                scoreD: matchResult.player2.scoreD,
+                result: matchResult.player2.result,
+                newWords: matchResult.player2.newWords
+            });
+            disconnect(matchResult.player2.socket);
+        }
     });
 }
 
-module.exports = { connect, playWithBot, playWithPlayer, undexpectedDisconnection };
+module.exports = { connect, playWithBot, playWithPlayer, unexpectedDisconnection };
