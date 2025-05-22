@@ -40,13 +40,23 @@ function generateMatchID() {
 
 // Kiểm tra tính hợp lệ của từ
 async function verifyWord(word, usedWords) {
+    if (!word || word.trim() === '') {
+        return {
+            result: false
+        }
+    }
+    word = word.toLowerCase().trim();
     if (usedWords.includes(word)) {
-        return false;
+        return {
+            result: false
+        }
     }
     if (usedWords.length >= 1) {
         let oldWord = usedWords[usedWords.length - 1];
         if (oldWord[oldWord.length - 1] !== word[0]) {
-            return false;
+            return {
+                result: false
+            }
         }
     }
     let wordInDB = await Word.findOne({
@@ -54,28 +64,34 @@ async function verifyWord(word, usedWords) {
             WordV: word
         }
     });
-    return wordInDB ? true : false;
+    if (wordInDB) {
+        return {
+            result: true,
+            word: wordInDB.WordV
+        }
+    }
+    return {
+        result: false
+    }
 }
 
 // Xử lý thắng thua
-async function handleWinLose(matchID) {
+// Trả về object khi xử lý thành công, 0 khi không tìm thấy trận, 1 khi trận đang được xử lý, -1 khi lỗi xử lý cở sở dữ liệu
+async function handleWinLose(matchID, forceLossID) {
     let match = matches[matchID];
-    if (!match || !match.playing) {
-        return {
-            error: 'Trận đấu đã kết thúc hoặc đang được xử lý'
-        };
+    if (!match) {
+        return 0;
     }
-    match.status = false;
+    if (!match.playing) {
+        return 1;
+    }
+    match.playing = false;
     let player1 = match.player1;
     let player2 = match.player2;
     let turn = match.turn;
     let usedWords = match.usedWords;
-    let wordUsedByPlayer1 = usedWords.filter((word, index) => {
-        return index % 2 === 0;
-    });
-    let wordUsedByPlayer2 = usedWords.filter((word, index) => {
-        return index % 2 === 1;
-    });
+    let wordUsedByPlayer1 = usedWords.filter((word, index) => index % 2 === 0);
+    let wordUsedByPlayer2 = usedWords.filter((word, index) => index % 2 === 1);
     let transaction = null;
     let result = {};
     try {
@@ -114,23 +130,23 @@ async function handleWinLose(matchID) {
         }
         score1 = score1 > 0 ? score1 : 0;
         let oldScore1 = user1.Score;
-        if (turn % 2 === 0 && player2) {
-            user1.Score = Math.floor(user1.Score * 0.95 + score1);
-        } else {
+        if (!player2 || (turn % 2 === 1 && forceLossID !== player1.id)) {
             user1.Score = Math.floor(user1.Score + score1);
+        } else {
+            user1.Score = Math.floor(user1.Score * 0.95 + score1);
         }
         await user1.save({ transaction: transaction });
         await MatchHistory.create({
             AID1: player1.data.AID,
             AID2: player2 ? player2.data.AID : null,
             ScoreD: user1.Score - oldScore1,
-            Result: turn % 2
+            Result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0
         }, {
             transaction: transaction
         });
         result.player1 = {
             socket: player1,
-            result: turn % 2,
+            result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0,
             score: user1.Score,
             scoreD: user1.Score - oldScore1,
             newWords: newWords1
@@ -167,7 +183,7 @@ async function handleWinLose(matchID) {
             let score2 = Math.floor(9 * wordUsedByPlayer2.length - sumPopularity2);
             score2 = score2 > 0 ? score2 : 0;
             let oldScore2 = user2.Score;
-            if (turn % 2 === 0) {
+            if (turn % 2 === 0 && forceLossID !== player2.id) {
                 user2.Score = Math.floor(user2.Score + score2);
             } else {
                 user2.Score = Math.floor(user2.Score * 0.95 + score2);
@@ -177,13 +193,13 @@ async function handleWinLose(matchID) {
                 AID1: player2.data.AID,
                 AID2: player1.data.AID,
                 ScoreD: user2.Score - oldScore2,
-                Result: turn % 2 === 0 ? 1 : 0
+                Result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0
             }, {
                 transaction: transaction
             });
             result.player2 = {
                 socket: player2,
-                result: turn % 2 === 0 ? 1 : 0,
+                result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0,
                 score: user2.Score,
                 scoreD: user2.Score - oldScore2,
                 newWords: newWords2
@@ -196,13 +212,14 @@ async function handleWinLose(matchID) {
             await transaction.rollback();
         }
         console.log('Lỗi xử lý thắng thua', error);
-        return null;
+        return -1;
     } finally {
         delete matches[matchID];
     }
 }
 
 // Xử lý khi client kết nối sau đó gửi refresh token
+// Hệ thống trả về event authentication failed
 function connect(socket) {
     socket.data = {};
     socket.on('authentication', (refreshToken) => {
@@ -230,8 +247,10 @@ function disconnect(socket) {
 // Xử lý khi người chơi muốn chơi với bot
 function playWithBot(socket) {
     // Khởi tạo trận đấu với bot
+    // Hệ thống trả về event invalid operation, your turn
     socket.on('play with bot', () => {
-        if (!verify(socket)) {
+        if (!verify(socket) || socket.data.matchID) {
+            socket.emit('invalid operation');
             return;
         }
         let matchID = generateMatchID();
@@ -249,32 +268,35 @@ function playWithBot(socket) {
         });
     });
     // Xử lý khi người chơi gửi từ
+    // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result, system error
     socket.on('send word to bot', async (word) => {
-        if (!verify(socket)) {
+        if (!verify(socket) || !socket.data.matchID) {
+            socket.emit('invalid operation');
             return;
         }
-        if (!word) {
-            socket.emit('invalid word', { error: 'Thiếu từ' });
+        let match = matches[socket.data.matchID];
+        if (!match || !match.playing) {
+            socket.emit('invalid match');
             return;
         }
-        word = word.toLowerCase();
         try {
-            let usedWords = matches[socket.data.matchID].usedWords;
-            if (!(await verifyWord(word, usedWords))) {
-                socket.emit('invalid word', { error: 'Từ không hợp lệ' });
+            let usedWords = match.usedWords;
+            let wordCheck = await verifyWord(word, usedWords);
+            if (!wordCheck.result) {
+                socket.emit('invalid word');
                 return;
             }
-            usedWords.push(word);
-            matches[socket.data.matchID].turn++;
+            usedWords.push(wordCheck.word);
+            match.turn++;
             await WordHistory.create({
                 AID: socket.data.AID,
-                WordV: word
+                WordV: wordCheck.word
             });
             let count = await Word.count({
                 where: {
                     WordV: {
                         [Op.notIn]: usedWords,
-                        [Op.like]: `${word[word.length - 1]}%`
+                        [Op.like]: `${wordCheck.word[word.length - 1]}%`
                     }
                 }
             });
@@ -283,12 +305,12 @@ function playWithBot(socket) {
                 let wordToUse = Word.findOne({
                     where: {
                         [Op.notIn]: usedWords,
-                        [Op.like]: `${word[word.length - 1]}%`
+                        [Op.like]: `${wordCheck.word[word.length - 1]}%`
                     },
                     offset: offset
                 });
                 usedWords.push(wordToUse);
-                matches[socket.data.matchID].turn++;
+                match.turn++;
                 socket.emit('your turn', {
                     currentWord: wordToUse,
                     usedWords: usedWords
@@ -296,74 +318,226 @@ function playWithBot(socket) {
                 return;
             }
             // Xử lý khi không còn từ nào để sử dụng
-            let result = await handleWinLose(socket.data.matchID);
-            if (result) {
-                socket.emit('send match result', {
-                    score: result.player1.score,
-                    scoreD: result.player1.scoreD,
-                    result: result.player1.result,
-                    newWords: result.player1.newWords
-                });
+            let result = await handleWinLose(socket.data.matchID, null);
+            if (result === 0) {
+                socket.emit('invalid match');
                 disconnect(socket);
                 return;
             }
-            throw new Error('Lỗi xử lý trận đấu');
-        } catch (error) {
-            delete matches[socket.data.matchID];
-            console.log('Lỗi xử lý từ chơi với bot', error);
-            socket.emit('Lỗi hệ thống');
-            disconnect(socket);
-        }
-    });
-    // Xử lý khi người chơi không có từ phù hợp
-    socket.on('bot win', async () => {
-        if (!verify(socket)) {
-            return;
-        }
-        let result = await handleWinLose(socket.data.matchID);
-        if (!result) {
-            return;
-        }
-        if (result) {
-            socket.emit('send match result', {
+            if (result === -1 || result === 1) {
+                socket.emit('system error');
+                disconnect(socket);
+                return;
+            }
+            socket.emit('match result', {
                 score: result.player1.score,
                 scoreD: result.player1.scoreD,
                 result: result.player1.result,
                 newWords: result.player1.newWords
             });
+            disconnect(socket);
+        } catch (error) {
+            delete matches[socket.data.matchID];
+            console.log('Lỗi xử lý từ chơi với bot', error);
+            socket.emit('system error');
+            disconnect(socket);
         }
-        else {
-            socket.emit('Lỗi hệ thống');
+    });
+    // Xử lý khi người chơi không có từ phù hợp
+    // Hệ thống trả về event invalid operation, match result, system error
+    socket.on('bot win', async () => {
+        if (!verify(socket) || !socket.data.matchID) {
+            socket.emit('invalid operation');
+            return;
         }
+        let match = matches[socket.data.matchID];
+        if (!match || !match.playing) {
+            socket.emit('invalid match');
+            return;
+        }
+        let result = await handleWinLose(socket.data.matchID, null);
+        if (result === 0) {
+            socket.emit('invalid match');
+            disconnect(socket);
+            return;
+        }
+        if (result === -1 || result === 1) {
+            socket.emit('system error');
+            disconnect(socket);
+            return;
+        }
+        socket.emit('match result', {
+            score: result.player1.score,
+            scoreD: result.player1.scoreD,
+            result: result.player1.result,
+            newWords: result.player1.newWords
+        });
         disconnect(socket);
     });
 }
 
-// Xur lý khi người chơi muốn chơi với người khác
+// Xử lý khi người chơi muốn chơi với người khác
 async function playWithPlayer(socket) {
+    // Tìm trận
+    // Hệ thống trả về event invalid operation, match found, your turn, waiting for a match
+    socket.on('find match', () => {
+        if (!verify(socket) || socket.data.matchID) {
+            socket.emit('invalid operation');
+            return;
+        }
+        if (queue.length > 0) {
+            let otherPlayer = queue.shift();
+            let matchID = generateMatchID();
+            matches[matchID] = {
+                player1: otherPlayer,
+                player2: socket,
+                turn: 0,
+                usedWords: [],
+                playing: true
+            };
+            otherPlayer.data.matchID = matchID;
+            socket.data.matchID = matchID;
+            otherPlayer.emit('match found', { opponent: socket.data.Username });
+            socket.emit('match found', { opponent: otherPlayer.data.Username });
+            otherPlayer.emit('your turn', {
+                currentWord: null,
+                usedWords: []
+            });
+        } else {
+            queue.push(socket);
+            socket.emit('waiting for a match');
+        }
+    });
+    // Xử lý khi người chơi gửi từ
+    // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result
+    socket.on('send word to player', async (word) => {
+        if (!verify(socket) || !socket.data.matchID) {
+            socket.emit('invalid operation');
+            return;
+        }
+        let match = matches[socket.data.matchID];
+        if (!match || !match.playing) {
+            socket.emit('invalid match');
+            return;
+        }
+        if (match.turn % 2 === 0 && match.player2.id === socket.id) {
+            socket.emit('invalid operation');
+            return;
+        } else if (match.turn % 2 === 1 && match.player1.id === socket.id) {
+            socket.emit('invalid operation');
+            return;
+        }
+        try {
+            let usedWords = match.usedWords;
+            let wordCheck = await verifyWord(word, usedWords);
+            if (!wordCheck.result) {
+                socket.emit('invalid word');
+                return;
+            }
+            usedWords.push(wordCheck.word);
+            match.turn++;
+            await WordHistory.create({
+                AID: socket.data.AID,
+                WordV: wordCheck.word
+            });
+            let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+            otherPlayer.emit('your turn', {
+                currentWord: wordCheck.word,
+                usedWords: usedWords
+            });
+        } catch (error) {
+            console.log('Lỗi xử lý từ chơi với người', error);
+            let match = matches[socket.data.matchID];
+            let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+            socket.emit('system error');
+            disconnect(socket);
+            otherPlayer.emit('system error');
+            disconnect(otherPlayer);
+            delete matches[socket.data.matchID];
+        }
+    });
+    // Xử lý khi 1 người chơi không trả lời được từ phù hợp
+    // Hệ thống trả về event invalid operation, invalid match, match result
+    socket.on('other player win', async () => {
+        if (!verify(socket) || !socket.data.matchID) {
+            socket.emit('invalid operation');
+            return;
+        }
+        let match = matches[socket.data.matchID];
+        if (!match || !match.playing) {
+            socket.emit('invalid match');
+            return;
+        }
+        let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+        let matchResult = await handleWinLose(socket.data.matchID);
+        if (matchResult === 0) {
+            socket.emit('invalid match');
+            otherPlayer.emit('invalid match');
+            disconnect(otherPlayer);
+            disconnect(socket);
+            return;
+        }
+        if (matchResult === -1 || matchResult === 1) {
+            socket.emit('system error');
+            otherPlayer.emit('system error');
+            disconnect(otherPlayer);
+            disconnect(socket);
+            return;
+        }
+        matchResult.player1.socket.emit('match result', {
+            score: matchResult.player1.score,
+            scoreD: matchResult.player1.scoreD,
+            result: matchResult.player1.result,
+            newWords: matchResult.player1.newWords
+        });
+        disconnect(matchResult.player1.socket);
+        matchResult.player2.socket.emit('match result', {
+            score: matchResult.player2.score,
+            scoreD: matchResult.player2.scoreD,
+            result: matchResult.player2.result,
+            newWords: matchResult.player2.newWords
+        });
+        disconnect(matchResult.player2.socket);
+    });
 }
 
 // Xử lý khi người chơi ngắt kết nối đột ngột
+// Hệ thống trả về event invalid match, system error, match result
 function unexpectedDisconnection(socket) {
     socket.on('disconnect', async () => {
         if (!socket.data.matchID) {
             return;
         }
-        let player1Socket = matches[socket.data.matchID].player1;
-        let player2Socket = matches[socket.data.matchID].player2;
-        let matchResult = await handleWinLose(socket.data.matchID);
-        if (!matchResult) {
+        let match = matches[socket.data.matchID];
+        if (!match || !match.playing) {
+            return;
+        }
+        let player1Socket = match.player1;
+        let player2Socket = match.player2;
+        let matchResult = await handleWinLose(socket.data.matchID, socket.id);
+        if (matchResult === 0) {
             if (player1Socket.id !== socket.id) {
-                player1Socket.emit('Lỗi xử lý thắng thua khi đối thủ ngắt kết nối');
+                player1Socket.emit('invalid match');
                 disconnect(player1Socket);
             } else if (player2Socket && player2Socket.id !== socket.id) {
-                player2Socket.emit('Lỗi xử lý thắng thua khi đối thủ ngắt kết nối');
+                player2Socket.emit('invalid match');
                 disconnect(player2Socket);
             }
             return;
+        } else if (matchResult === -1) {
+            if (player1Socket.id !== socket.id) {
+                player1Socket.emit('system error');
+                disconnect(player1Socket);
+            } else if (player2Socket && player2Socket.id !== socket.id) {
+                player2Socket.emit('system error');
+                disconnect(player2Socket);
+            }
+            return;
+        } else if (matchResult === 1) {
+            return;
         }
         if (matchResult.player1.socket.id !== socket.id) {
-            matchResult.player1.socket.emit('send match result', {
+            matchResult.player1.socket.emit('match result', {
                 score: matchResult.player1.score,
                 scoreD: matchResult.player1.scoreD,
                 result: matchResult.player1.result,
@@ -372,7 +546,7 @@ function unexpectedDisconnection(socket) {
             disconnect(matchResult.player1.socket);
         }
         if (matchResult.player2 && matchResult.player2.socket.id !== socket.id) {
-            matchResult.player2.socket.emit('send match result', {
+            matchResult.player2.socket.emit('match result', {
                 score: matchResult.player2.score,
                 scoreD: matchResult.player2.scoreD,
                 result: matchResult.player2.result,
