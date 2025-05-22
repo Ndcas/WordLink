@@ -59,10 +59,17 @@ async function verifyWord(word, usedWords) {
 
 // Xử lý thắng thua
 async function handleWinLose(matchID) {
-    let player1 = matches[matchID].player1;
-    let player2 = matches[matchID].player2;
-    let turn = matches[matchID].turn;
-    let usedWords = matches[matchID].usedWords;
+    let match = matches[matchID];
+    if (!match || !match.playing) {
+        return {
+            error: 'Trận đấu đã kết thúc hoặc đang được xử lý'
+        };
+    }
+    match.status = false;
+    let player1 = match.player1;
+    let player2 = match.player2;
+    let turn = match.turn;
+    let usedWords = match.usedWords;
     let wordUsedByPlayer1 = usedWords.filter((word, index) => {
         return index % 2 === 0;
     });
@@ -233,7 +240,8 @@ function playWithBot(socket) {
             player1: socket,
             player2: null,
             turn: 0,
-            usedWords: []
+            usedWords: [],
+            playing: true
         };
         socket.emit('your turn', {
             currentWord: null,
