@@ -1,10 +1,12 @@
+const { Op } = require('sequelize');
 const authentication = require("./authentication");
-const cacheClient = require("./cacheClient");
+const cacheClient = require("./cache");
 const Word = require('../models/word');
 const WordHistory = require('../models/wordhistory');
 const MatchHistory = require('../models/matchhistory');
 const Account = require('../models/account');
 const Bookmark = require('../models/bookmark');
+const AvatarImage = require('../models/avatarimage');
 const db = require('../services/database');
 
 let queue = [];
@@ -218,13 +220,17 @@ async function handleWinLose(matchID, forceLossID) {
     }
 }
 
-// Xử lý khi client kết nối sau đó gửi refresh token
+// Xử lý khi client kết nối sau đó gửi refresh token và tên của avatar
 // Hệ thống trả về event authentication failed
 function connect(socket) {
     socket.data = {};
-    socket.on('authentication', (refreshToken) => {
+    socket.on('authentication', async (refreshToken, avatarImage) => {
         if (!refreshToken) {
             socket.emit('authentication failed', { error: 'Thiếu refresh token' });
+            return;
+        }
+        if (!avatarImage) {
+            socket.emit('authentication failed', { error: 'Thiếu avatar image' });
             return;
         }
         let payload = authentication.verifyRefreshToken(refreshToken);
@@ -235,6 +241,7 @@ function connect(socket) {
         socket.data.AID = payload.AID;
         socket.data.Username = payload.Username;
         socket.data.refreshToken = refreshToken;
+        socket.data.avatarImage = avatarImage;
     });
 }
 
@@ -397,8 +404,14 @@ async function playWithPlayer(socket) {
             };
             otherPlayer.data.matchID = matchID;
             socket.data.matchID = matchID;
-            otherPlayer.emit('match found', { opponent: socket.data.Username });
-            socket.emit('match found', { opponent: otherPlayer.data.Username });
+            otherPlayer.emit('match found', {
+                opponent: socket.data.Username,
+                avatarImage: socket.data.avatarImage
+            });
+            socket.emit('match found', {
+                opponent: otherPlayer.data.Username,
+                avatarImage: otherPlayer.data.avatarImage
+            });
             otherPlayer.emit('your turn', {
                 currentWord: null,
                 usedWords: []

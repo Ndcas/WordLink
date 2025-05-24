@@ -3,19 +3,51 @@ const controller = require('../controllers/account');
 
 const router = express.Router();
 
-// Cần tham số email trong body
-router.post('/getOTP', controller.getOTP);
+// Cần tham số email (Email) trong body
+// => Gửi OTP đến email
+router.post('/getOTPSignUp', controller.getOTPSignUp);
 
-// Cần refresh token trong header Authorization: 'Bearer [refresh token]' => token
+// Cần refresh token trong header Authorization: 'Bearer [refresh token]'
+// => accessToken
 router.post('/refreshAccessToken', controller.refreshAccessToken);
 
-// Cần tham số username, password, email, otp
+// Cần tham số username (Username), password (APassword chưa hash), email (Email), otp trong body
 router.post('/signUp', controller.signUp);
 
-// Cần tham số username, password => token và refresh token
+// Cần tham số username (Username), password (APassword chưa hash) trong body
+// => accessToken và refreshToken
 router.post('/logIn', controller.logIn);
 
 // Cần refresh token trong header Authorization: 'Bearer [refresh token]'
+// => accessToken và refreshToken
 router.post('/quickLogIn', controller.quickLogIn);
+
+// Cần access token trong header Authorization: 'Bearer [access token]'
+// => Username, Email, AvatarImage (AvatarImage.Name), Score
+router.get('/getAccountInfo', controller.verifyAccessToken, controller.getAccountInfo);
+
+// Cần access token trong header Authorization: 'Bearer [access token]'
+// => [{Rank, Username, Score}...]
+router.get('/getLeaderboard', controller.verifyAccessToken, controller.getLeaderboard);
+
+// Cần access token trong header Authorization: 'Bearer [access token]'
+// => rank
+router.get('/getAccountRank', controller.verifyAccessToken, controller.getAccountRank);
+
+// Cần access token trong header Authorization: 'Bearer [access token]', oldPassword (APassword chưa hash cũ), newPassword (APassword chưa hash mới) trong body
+router.post('/changePassword', controller.verifyAccessToken, controller.changePassword);
+
+// Cần username (Username) trong body
+// => Gửi OTP đến email của tài khoản
+router.post('/getOTPResetPassword', controller.getOTPResetPassword);
+
+// Cần username (Username), newPassword (APassword chưa hash mới), otp trong body
+router.post('/resetPassword', controller.resetPassword);
+
+// Cần access token trong header Authorization: 'Bearer [access token]', aiid (AIID) trong body
+router.post('/changeAvatarImage', controller.verifyAccessToken, controller.changeAvatarImage);
+
+// Cần access token trong header Authorization: 'Bearer [access token]'
+router.post('/logOut', controller.verifyAccessToken, controller.logOut);
 
 module.exports = router;

@@ -2,6 +2,8 @@ const express = require('express');
 require('dotenv').config();
 const testRouter = require('./routers/test');
 const accountRouter = require('./routers/account');
+const bookmarkRouter = require('./routers/bookmark');
+const wordRouter = require('./routers/word');
 const http = require('http');
 const { Server } = require('socket.io');
 const gameHandler = require('./services/game');
@@ -21,6 +23,10 @@ app.use(express.json());
 app.use('/', testRouter);
 
 app.use('/account', accountRouter);
+
+app.use('/bookmark', bookmarkRouter);
+
+app.use('/word', wordRouter);
 
 const server = http.createServer(app);
 
