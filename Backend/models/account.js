@@ -7,6 +7,13 @@ const Account = db.define('Account', {
         primaryKey: true,
         autoIncrement: true
     },
+    AIID: {
+        type: DataTypes.INTEGER,
+        references: {
+            model: 'AvatarImage',
+            key: 'AIID'
+        }
+    },
     Username: {
         type: DataTypes.STRING(200),
         allowNull: false,
@@ -26,11 +33,6 @@ const Account = db.define('Account', {
         validate: {
             isEmail: true,
         }
-    },
-    Role: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-        defaultValue: 0
     },
     Status: {
         type: DataTypes.INTEGER,

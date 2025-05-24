@@ -1,10 +1,11 @@
 const Account = require('../models/account');
+const Admin = require('../models/admin');
 const authentication = require('../services/authentication');
 const sendEmail = require('../services/mail');
 const cacheClient = require('../services/cache');
 const validator = require('validator');
 
-let appEmail = process.env.APP_EMAIL;
+const appEmail = process.env.APP_EMAIL;
 
 async function getOTP(req, res) {
     let email = req.body.email;
@@ -84,17 +85,30 @@ async function signUp(req, res) {
         return res.status(400).json({ error: 'Mã xác thực không đúng hoặc đã hết hạn' });
     }
     try {
+        let existingAccount = await Account.findOne({ where: { Username: username } });
+        if (existingAccount) {
+            return res.status(400).json({ error: 'Tên tài khoản đã tồn tại' });
+        }
+        existingAccount = await Account.findOne({ where: { Email: email } });
+        if (existingAccount) {
+            return res.status(400).json({ error: 'Email đã được sử dụng' });
+        }
+        let existingAdmin = await Admin.findOne({ where: { Email: email } });
+        if (existingAdmin) {
+            return res.status(400).json({ error: 'Email đã được sử dụng' });
+        }
         await Account.create({
             Username: username,
             APassword: authentication.hashPassword(password),
             Email: email,
-            Role: 0,
             Status: 1,
-            Score: 0
+            Score: 0,
+            AIID: null
         });
         return res.status(200).json({ message: 'Đăng ký thành công' });
     } catch (error) {
-        return res.status(400).json({ error: 'Tên tài khoản hoặc email đã tồn tại' });
+        console.log('Lỗi đăng ký', error);
+        return res.status(500).json({ error: 'Lỗi hệ thống' });
     }
 }
 
@@ -108,8 +122,7 @@ async function logIn(req, res) {
         let account = await Account.findOne({
             where: {
                 Username: username,
-                APassword: authentication.hashPassword(password),
-                Role: 0,
+                APassword: authentication.hashPassword(password)
             }
         });
         if (!account) {
