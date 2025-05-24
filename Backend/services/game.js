@@ -43,37 +43,32 @@ function generateMatchID() {
 // Kiểm tra tính hợp lệ của từ
 async function verifyWord(word, usedWords) {
     if (!word || word.trim() === '') {
-        return {
-            result: false
-        }
+        return { result: false }
     }
     word = word.toLowerCase().trim();
     if (usedWords.includes(word)) {
-        return {
-            result: false
-        }
+        return { result: false }
     }
     if (usedWords.length >= 1) {
         let oldWord = usedWords[usedWords.length - 1];
         if (oldWord[oldWord.length - 1] !== word[0]) {
+            return { result: false }
+        }
+    }
+    try {
+        let wordInDB = await Word.findOne({
+            where: { WordV: word }
+        });
+        if (wordInDB) {
             return {
-                result: false
+                result: true,
+                word: wordInDB.WordV
             }
         }
-    }
-    let wordInDB = await Word.findOne({
-        where: {
-            WordV: word
-        }
-    });
-    if (wordInDB) {
-        return {
-            result: true,
-            word: wordInDB.WordV
-        }
-    }
-    return {
-        result: false
+        return { result: false }
+    } catch (error) {
+        console.log('Lỗi khi kiểm tra tính hợp lệ của từ', error);
+        return false;
     }
 }
 
@@ -143,9 +138,7 @@ async function handleWinLose(matchID, forceLossID) {
             AID2: player2 ? player2.data.AID : null,
             ScoreD: user1.Score - oldScore1,
             Result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0
-        }, {
-            transaction: transaction
-        });
+        }, { transaction: transaction });
         result.player1 = {
             socket: player1,
             result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0,
@@ -196,9 +189,7 @@ async function handleWinLose(matchID, forceLossID) {
                 AID2: player1.data.AID,
                 ScoreD: user2.Score - oldScore2,
                 Result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0
-            }, {
-                transaction: transaction
-            });
+            }, { transaction: transaction });
             result.player2 = {
                 socket: player2,
                 result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0,

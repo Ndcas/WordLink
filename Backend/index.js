@@ -1,11 +1,15 @@
 const express = require('express');
 require('dotenv').config();
+const http = require('http');
+const { Server } = require('socket.io');
+const { rateLimit } = require('express-rate-limit');
+const { slowDown } = require('express-slow-down');
 const testRouter = require('./routers/test');
 const accountRouter = require('./routers/account');
 const bookmarkRouter = require('./routers/bookmark');
 const wordRouter = require('./routers/word');
-const http = require('http');
-const { Server } = require('socket.io');
+const wordmeaningRouter = require('./routers/wordmeaning');
+
 const gameHandler = require('./services/game');
 
 const port = process.env.APP_PORT;
@@ -20,6 +24,21 @@ app.use(express.urlencoded({
 
 app.use(express.json());
 
+const limiter = rateLimit({
+    windowMs: 60000,
+    max: 30
+});
+
+app.use(limiter);
+
+const slower = slowDown({
+    windowMs: 60000,
+    delayAfter: 10,
+    delayMs: () => 300
+});
+
+app.use(slower);
+
 app.use('/', testRouter);
 
 app.use('/account', accountRouter);
@@ -27,6 +46,8 @@ app.use('/account', accountRouter);
 app.use('/bookmark', bookmarkRouter);
 
 app.use('/word', wordRouter);
+
+app.use('/wordMeaning', wordmeaningRouter);
 
 const server = http.createServer(app);
 
