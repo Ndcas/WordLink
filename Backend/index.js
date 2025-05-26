@@ -58,6 +58,7 @@ server.listen(port, () => {
 const io = new Server(server);
 
 io.on('connection', (socket) => {
+    socket.data = { guest: true };
     gameHandler.connect(socket);
     gameHandler.playWithBot(socket);
     gameHandler.playWithPlayer(socket);

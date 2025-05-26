@@ -233,6 +233,7 @@ function connect(socket) {
         socket.data.Username = payload.Username;
         socket.data.refreshToken = refreshToken;
         socket.data.avatarImage = avatarImage;
+        socket.data.guest = false;
     });
 }
 
@@ -247,7 +248,7 @@ function playWithBot(socket) {
     // Khởi tạo trận đấu với bot
     // Hệ thống trả về event invalid operation, your turn
     socket.on('play with bot', () => {
-        if (!verify(socket) || socket.data.matchID) {
+        if ((!verify(socket) && !socket.data.guest) || socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
@@ -268,7 +269,7 @@ function playWithBot(socket) {
     // Xử lý khi người chơi gửi từ
     // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result, system error
     socket.on('send word to bot', async (word) => {
-        if (!verify(socket) || !socket.data.matchID) {
+        if ((!verify(socket) && !socket.data.guest) || !socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
@@ -286,10 +287,12 @@ function playWithBot(socket) {
             }
             usedWords.push(wordCheck.word);
             match.turn++;
-            await WordHistory.create({
-                AID: socket.data.AID,
-                WordV: wordCheck.word
-            });
+            if (!socket.data.guest) {
+                await WordHistory.create({
+                    AID: socket.data.AID,
+                    WordV: wordCheck.word
+                });
+            }
             let count = await Word.count({
                 where: {
                     WordV: {
@@ -316,6 +319,11 @@ function playWithBot(socket) {
                 return;
             }
             // Xử lý khi không còn từ nào để sử dụng
+            if (socket.data.guest) {
+                socket.emit('match result', { result: 1 });
+                disconnect(socket);
+                return;
+            }
             let result = await handleWinLose(socket.data.matchID, null);
             if (result === 0) {
                 socket.emit('invalid match');
@@ -344,13 +352,18 @@ function playWithBot(socket) {
     // Xử lý khi người chơi không có từ phù hợp
     // Hệ thống trả về event invalid operation, match result, system error
     socket.on('bot win', async () => {
-        if (!verify(socket) || !socket.data.matchID) {
+        if ((!verify(socket) && !socket.data.guest) || !socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
         let match = matches[socket.data.matchID];
         if (!match || !match.playing) {
             socket.emit('invalid match');
+            return;
+        }
+        if (socket.data.guest) {
+            socket.emit('match result', { result: 0 });
+            disconnect(socket);
             return;
         }
         let result = await handleWinLose(socket.data.matchID, null);
