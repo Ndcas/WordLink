@@ -6,7 +6,6 @@ const WordHistory = require('../models/wordhistory');
 const MatchHistory = require('../models/matchhistory');
 const Account = require('../models/account');
 const Bookmark = require('../models/bookmark');
-const AvatarImage = require('../models/avatarimage');
 const db = require('../services/database');
 
 let queue = [];
@@ -96,22 +95,16 @@ async function handleWinLose(matchID, forceLossID) {
         // Xử lý người chơi 1
         let sumPopularity1 = await Word.sum('Popularity', {
             where: {
-                WordV: {
-                    [Op.in]: wordUsedByPlayer1
-                }
+                WordV: { [Op.in]: wordUsedByPlayer1 }
             }
         });
         let user1 = await Account.findOne({
-            where: {
-                AID: player1.data.AID
-            }
+            where: { AID: player1.data.AID }
         });
         let bookmarks1 = await Bookmark.findAll({
             where: {
                 AID: player1.data.AID,
-                WordV: {
-                    [Op.in]: usedWords
-                }
+                WordV: { [Op.in]: usedWords }
             }
         });
         let newWords1 = usedWords.filter((word) => {
@@ -152,22 +145,16 @@ async function handleWinLose(matchID, forceLossID) {
         } else {
             let sumPopularity2 = await Word.sum('Popularity', {
                 where: {
-                    WordV: {
-                        [Op.in]: wordUsedByPlayer2
-                    }
+                    WordV: { [Op.in]: wordUsedByPlayer2 }
                 }
             });
             let user2 = await Account.findOne({
-                where: {
-                    AID: player2.data.AID
-                }
+                where: { AID: player2.data.AID }
             });
             let bookmarks2 = await Bookmark.findAll({
                 where: {
                     AID: player2.data.AID,
-                    WordV: {
-                        [Op.in]: usedWords
-                    }
+                    WordV: { [Op.in]: usedWords }
                 }
             });
             let newWords2 = usedWords.filter((word) => {
@@ -212,7 +199,7 @@ async function handleWinLose(matchID, forceLossID) {
 }
 
 // Xử lý khi client kết nối sau đó gửi refresh token và tên của avatar
-// Hệ thống trả về event authentication failed
+// Hệ thống trả về event authentication failed, system error
 function connect(socket) {
     socket.data = {};
     socket.on('authentication', async (refreshToken, avatarImage) => {
@@ -229,11 +216,17 @@ function connect(socket) {
             socket.emit('authentication failed', { error: 'Refresh token không hợp lệ' });
             return;
         }
-        socket.data.AID = payload.AID;
-        socket.data.Username = payload.Username;
-        socket.data.refreshToken = refreshToken;
-        socket.data.avatarImage = avatarImage;
-        socket.data.guest = false;
+        try {
+            let account = await Account.findOne({ AID: payload.AID });
+            socket.data.AID = payload.AID;
+            socket.data.Username = account.Username;
+            socket.data.refreshToken = refreshToken;
+            socket.data.avatarImage = avatarImage;
+            socket.data.guest = false;
+        } catch (error) {
+            console.log('Lỗi khi lấy thông tin lưu vào socket', error);
+            socket.emit('system error');
+        }
     });
 }
 

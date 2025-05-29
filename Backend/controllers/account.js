@@ -18,8 +18,14 @@ async function getOTPSignUp(req, res) {
     if (!validator.isEmail(email)) {
         return res.status(400).json({ error: 'Email không hợp lệ' });
     }
-    let number = Math.floor(Math.random() * 900000) + 100000;
     try {
+        let user = await Account.findOne({
+            where: { Email: email }
+        });
+        if (user) {
+            return res.status(400).json({ error: 'Email đã được sử dụng' });
+        }
+        let number = Math.floor(Math.random() * 900000) + 100000;
         await sendEmail(email, 'Mã xác thực', `<p>Mã xác thực của bạn là: <b>${number}</b></p><p>Mã có hiệu lực trong vòng 5 phút, vui lòng không chia sẻ mã này với bất kỳ ai khác.</p>`);
         cacheClient.set(`otp:${email}`, number, 300);
         return res.status(200).json({ message: 'Mã xác thực đã được gửi đến email của bạn' });
@@ -116,15 +122,15 @@ async function signUp(req, res) {
 }
 
 async function logIn(req, res) {
-    let username = req.body.username;
+    let email = req.body.email;
     let password = req.body.password;
-    if (!username || !password) {
+    if (!email || !password || !validator.isEmail(email)) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
         let account = await Account.findOne({
             where: {
-                Username: username,
+                Email: email,
                 APassword: authentication.hashPassword(password)
             }
         });
@@ -134,10 +140,7 @@ async function logIn(req, res) {
         if (account.Status === 0) {
             return res.status(403).json({ error: `Tài khoản này đã bị khóa, vui lòng liên hệ ${appEmail} để kháng cáo` });
         }
-        let payload = {
-            AID: account.AID,
-            Username: account.Username
-        }
+        let payload = { AID: account.AID }
         let accessToken = authentication.signAccessToken(payload);
         let refreshToken = authentication.signRefreshToken(payload);
         cacheClient.set(`refreshToken:${account.AID}`, refreshToken);
@@ -251,6 +254,8 @@ async function changePassword(req, res) {
         }, {
             where: { AID: AID }
         });
+        let refreshToken = authentication.signRefreshToken({ AID: AID });
+        cacheClient.set(`refreshToken:${AID}`, refreshToken);
         return res.status(200).json({ message: 'Đổi mật khẩu thành công' });
     } catch (error) {
         console.log('Lỗi đổi mật khẩu', error);
@@ -259,18 +264,18 @@ async function changePassword(req, res) {
 }
 
 async function getOTPResetPassword(req, res) {
-    let username = req.body.username;
-    if (!username) {
+    let email = req.body.email;
+    if (!email || !validator.isEmail(email)) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
-        let account = await Account.findOne({ where: { Username: username } });
+        let account = await Account.findOne({ where: { Email: email } });
         if (!account) {
             return res.status(404).json({ error: 'Tài khoản không tồn tại' });
         }
         let number = Math.floor(Math.random() * 900000) + 100000;
         await sendEmail(account.Email, 'Mã xác thực', `<p>Mã xác thực của bạn là: <b>${number}</b></p><p>Mã có hiệu lực trong vòng 5 phút, vui lòng không chia sẻ mã này với bất kỳ ai khác.</p>`);
-        cacheClient.set(`otp:${account.Email}`, number, 300);
+        cacheClient.set(`otp:${email}`, number, 300);
         return res.status(200).json({ message: 'Mã xác thực đã được gửi đến email của bạn' });
     } catch (error) {
         console.log('Lỗi gửi OTP để đặt lại mật khẩu', error);
@@ -279,25 +284,26 @@ async function getOTPResetPassword(req, res) {
 }
 
 async function resetPassword(req, res) {
-    let username = req.body.username;
+    let email = req.body.email;
     let newPassword = req.body.newPassword;
     let otp = req.body.otp;
-    if (!username || !newPassword || !otp) {
+    if (!email || !newPassword || !otp || !validator.isEmail(email)) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     if (newPassword.trim().length < 8) {
         return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 8 ký tự' });
     }
     try {
-        let account = await Account.findOne({ where: { Username: username } });
+        let account = await Account.findOne({ where: { Email: email } });
         if (!account) {
             return res.status(404).json({ error: 'Tài khoản không tồn tại' });
         }
-        if (cacheClient.take(`otp:${account.Email}`) !== otp) {
+        if (cacheClient.take(`otp:${email}`) !== otp) {
             return res.status(400).json({ error: 'Mã xác thực không đúng hoặc đã hết hạn' });
         }
         account.APassword = authentication.hashPassword(newPassword);
         await account.save();
+        cacheClient.del(`refreshToken:${account.AID}`);
         return res.status(200).json({ message: 'Đặt lại mật khẩu thành công' });
     } catch (error) {
         console.log('Lỗi đặt lại mật khẩu', error);
