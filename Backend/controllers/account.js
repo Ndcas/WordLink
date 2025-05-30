@@ -81,6 +81,7 @@ async function signUp(req, res) {
     if (!username || !password || !email || !otp) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
+    username = username.trim();
     if (!validator.isEmail(email)) {
         return res.status(400).json({ error: 'Email không hợp lệ' });
     }
@@ -335,10 +336,39 @@ async function changeAvatarImage(req, res) {
     }
 }
 
+async function changeUsername(req, res) {
+    let AID = req.authorization.AID;
+    let username = req.body.username;
+    if (!username) {
+        return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
+    }
+    username = username.trim();
+    if (username.length < 3 || username.length > 50) {
+        return res.status(400).json({ error: 'Tên tài khoản phải có từ 3 đến 50 ký tự' });
+    }
+    try {
+        let usedUsername = await Account.findOne({
+            where: { Username: username }
+        });
+        if (usedUsername) {
+            return res.status(400).json({ error: 'Tên tài khoản đã được sử dụng' });
+        }
+        let user = await Account.findOne({
+            where: { AID: AID }
+        });
+        user.Username = username;
+        await user.save();
+        return res.status(200).json({ message: 'Đổi tên tài khoản thành công' });
+    } catch (error) {
+        console.log('Lỗi khi đổi Username', error);
+        return res.status(500).json({ error: 'Lỗi hệ thống' });
+    }
+}
+
 function logOut(req, res) {
     let AID = req.authorization.AID;
     cacheClient.del(`refreshToken:${AID}`);
     return res.status(200).json({ message: 'Đã đăng xuất' });
 }
 
-module.exports = { getOTPSignUp, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn, getAccountInfo, getLeaderboard, getAccountRank, changePassword, getOTPResetPassword, resetPassword, changeAvatarImage, logOut };
+module.exports = { getOTPSignUp, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn, getAccountInfo, getLeaderboard, getAccountRank, changePassword, getOTPResetPassword, resetPassword, changeAvatarImage, changeUsername, logOut };

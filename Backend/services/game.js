@@ -120,7 +120,9 @@ async function handleWinLose(matchID, forceLossID) {
         }
         score1 = score1 > 0 ? score1 : 0;
         let oldScore1 = user1.Score;
-        if (!player2 || (turn % 2 === 1 && forceLossID !== player1.id)) {
+        let player1Result = (forceLossID !== player1.id && turn % 2 === 1) ? 1 : 0;
+        // Nếu chơi với bot hoặc thắng thì cộng điểm, nếu chơi với người và thua thì trừ 5% số điểm sau đó cộng điểm
+        if (!player2 || player1Result === 1) {
             user1.Score = Math.floor(user1.Score + score1);
         } else {
             user1.Score = Math.floor(user1.Score * 0.95 + score1);
@@ -130,11 +132,11 @@ async function handleWinLose(matchID, forceLossID) {
             AID1: player1.data.AID,
             AID2: player2 ? player2.data.AID : null,
             ScoreD: user1.Score - oldScore1,
-            Result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0
+            Result: player1Result
         }, { transaction: transaction });
         result.player1 = {
             socket: player1,
-            result: (turn % 2 === 1 && forceLossID !== player1.id) ? 1 : 0,
+            result: player1Result,
             score: user1.Score,
             scoreD: user1.Score - oldScore1,
             newWords: newWords1
@@ -165,7 +167,9 @@ async function handleWinLose(matchID, forceLossID) {
             let score2 = Math.floor(9 * wordUsedByPlayer2.length - sumPopularity2);
             score2 = score2 > 0 ? score2 : 0;
             let oldScore2 = user2.Score;
-            if (turn % 2 === 0 && forceLossID !== player2.id) {
+            let player2Result = (forceLossID !== player2.id && turn % 2 === 0) ? 1 : 0;
+            // Nếu thắng thì cộng điểm, nếu thua thì trừ 5% số điểm sau đó cộng điểm
+            if (player2Result === 1) {
                 user2.Score = Math.floor(user2.Score + score2);
             } else {
                 user2.Score = Math.floor(user2.Score * 0.95 + score2);
@@ -175,11 +179,11 @@ async function handleWinLose(matchID, forceLossID) {
                 AID1: player2.data.AID,
                 AID2: player1.data.AID,
                 ScoreD: user2.Score - oldScore2,
-                Result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0
+                Result: player2Result
             }, { transaction: transaction });
             result.player2 = {
                 socket: player2,
-                result: (turn % 2 === 0 && forceLossID !== player2.id) ? 1 : 0,
+                result: player2Result,
                 score: user2.Score,
                 scoreD: user2.Score - oldScore2,
                 newWords: newWords2

@@ -46,6 +46,9 @@ router.post('/resetPassword', controller.resetPassword);
 // Cần access token trong header Authorization: 'Bearer [access token]', aiid (AIID) trong body
 router.post('/changeAvatarImage', controller.verifyAccessToken, controller.changeAvatarImage);
 
+// Cần access token trong header Authorization: 'Bearer [access token]', username (Username) trong body
+router.post('/changeUsername', controller.verifyAccessToken, controller.changeUsername);
+
 // Cần access token trong header Authorization: 'Bearer [access token]'
 router.post('/logOut', controller.verifyAccessToken, controller.logOut);
 
