@@ -245,7 +245,7 @@ function playWithBot(socket) {
     // Khởi tạo trận đấu với bot
     // Hệ thống trả về event invalid operation, your turn
     socket.on('play with bot', () => {
-        if ((!verify(socket) && !socket.data.guest) || socket.data.matchID) {
+        if ((!socket.data.guest && !verify(socket)) || socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
@@ -266,7 +266,7 @@ function playWithBot(socket) {
     // Xử lý khi người chơi gửi từ
     // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result, system error
     socket.on('send word to bot', async (word) => {
-        if ((!verify(socket) && !socket.data.guest) || !socket.data.matchID) {
+        if ((!socket.data.guest && !verify(socket)) || !socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
@@ -318,6 +318,7 @@ function playWithBot(socket) {
             // Xử lý khi không còn từ nào để sử dụng
             if (socket.data.guest) {
                 socket.emit('match result', { result: 1 });
+                delete matches[socket.data.matchID];
                 disconnect(socket);
                 return;
             }
@@ -349,7 +350,7 @@ function playWithBot(socket) {
     // Xử lý khi người chơi không có từ phù hợp
     // Hệ thống trả về event invalid operation, match result, system error
     socket.on('bot win', async () => {
-        if ((!verify(socket) && !socket.data.guest) || !socket.data.matchID) {
+        if ((!socket.data.guest && !verify(socket)) || !socket.data.matchID) {
             socket.emit('invalid operation');
             return;
         }
@@ -360,6 +361,7 @@ function playWithBot(socket) {
         }
         if (socket.data.guest) {
             socket.emit('match result', { result: 0 });
+            delete matches[socket.data.matchID];
             disconnect(socket);
             return;
         }
