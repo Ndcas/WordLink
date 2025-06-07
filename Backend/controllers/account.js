@@ -1,12 +1,14 @@
 const Account = require('../models/account');
 const Admin = require('../models/admin');
 const AvatarImage = require('../models/avatarimage');
+const MatchHistory = require('../models/matchhistory');
+const WordHistory = require('../models/wordhistory');
 const authentication = require('../services/authentication');
 const sendEmail = require('../services/mail');
 const cacheClient = require('../services/cache');
 const validator = require('validator');
 const db = require('../services/database');
-const { QueryTypes } = require('sequelize');
+const { QueryTypes, fn, col, Op } = require('sequelize');
 
 const appEmail = process.env.APP_EMAIL;
 
@@ -336,31 +338,106 @@ async function changeAvatarImage(req, res) {
     }
 }
 
-async function changeUsername(req, res) {
+async function changeUsernameAndAvatarImage(req, res) {
     let AID = req.authorization.AID;
     let username = req.body.username;
-    if (!username) {
+    let avatarName = req.body.avatarName;
+    if (!username && !avatarName) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    username = username.trim();
-    if (username.length < 3 || username.length > 50) {
-        return res.status(400).json({ error: 'Tên tài khoản phải có từ 3 đến 50 ký tự' });
+    if (username) {
+        username = username.trim();
+        if (username.length < 3 || username.length > 50) {
+            return res.status(400).json({ error: 'Tên tài khoản phải có từ 3 đến 50 ký tự' });
+        }
     }
     try {
-        let usedUsername = await Account.findOne({
-            where: { Username: username }
-        });
-        if (usedUsername) {
-            return res.status(400).json({ error: 'Tên tài khoản đã được sử dụng' });
+        if (username) {
+            let usedUsername = await Account.findOne({
+                where: { Username: username }
+            });
+            if (usedUsername) {
+                return res.status(400).json({ error: 'Tên tài khoản đã được sử dụng' });
+            }
+        }
+        let avatarImage = avatarName ? await AvatarImage.findOne({
+            where: { Name: avatarName }
+        }) : null;
+        if (avatarName && !avatarImage) {
+            return res.status(400).json({ error: 'Không tìm thấy ảnh đại điện yêu cầu' });
         }
         let user = await Account.findOne({
             where: { AID: AID }
         });
-        user.Username = username;
+        user.Username = username ? username : user.Username;
+        user.AIID = avatarImage ? avatarImage.AIID : user.AIID;
         await user.save();
-        return res.status(200).json({ message: 'Đổi tên tài khoản thành công' });
+        return res.status(200).json({ message: 'Đổi thông tin tài khoản thành công' });
     } catch (error) {
-        console.log('Lỗi khi đổi Username', error);
+        console.log('Lỗi khi đổi thông tin tài khoản', error);
+        return res.status(500).json({ error: 'Lỗi hệ thống' });
+    }
+}
+
+async function getAnalyticReport(req, res) {
+    let AID = req.authorization.AID;
+    let cachedData = cacheClient.get(`analyticReport:${AID}`);
+    if (cachedData) {
+        return res.status(200).json(cachedData);
+    }
+    try {
+        let numOfMatchesPlayed = await MatchHistory.count({
+            where: { AID1: AID }
+        });
+        let pvpStat = await MatchHistory.findAll({
+            attributes: [[fn('COUNT', col('MID')), 'count'], 'Result'],
+            where: {
+                AID1: AID,
+                AID2: {
+                    [Op.not]: null
+                }
+            },
+            group: 'Result'
+        });
+        let pvpWin = 0;
+        let pvpLose = 0;
+        pvpStat.forEach((stat) => {
+            if (stat.Result === 1) {
+                pvpWin = stat.count;
+            } else if (stat.Result === 0) {
+                pvpLose = stat.count;
+            }
+        });
+        let numOfWordsUsed = await WordHistory.count({
+            where: { AID: AID }
+        });
+        let last100Words = await WordHistory.findAll({
+            where: { AID: AID },
+            limit: 100,
+            order: [['UseTime', 'DESC']]
+        });
+        let count = last100Words.length;
+        let avg = 0;
+        let countMap = {}
+        last100Words.forEach((word) => {
+            avg += word.Popularity;
+            countMap[word.WordV] = countMap[word.WordV] ? countMap[word.WordV] + 1 : 1;
+        });
+        let sortedCountMap = Object.fromEntries(Object.entries(countMap).sort(([, a], [, b]) => b - a));
+        avg = count > 0 ? avg / count : 0;
+        let result = {
+            numOfMatchesPlayed: numOfMatchesPlayed,
+            pvpWin: pvpWin,
+            pvpLose: pvpLose,
+            numOfWordsUsed: numOfWordsUsed,
+            avgPopularity: avg,
+            last100countMap: sortedCountMap
+        }
+        // Cache lại 10'
+        cacheClient.set(`analyticReport:${AID}`, result, 600);
+        return res.status(200).json(result);
+    } catch (error) {
+        console.log('Lỗi khi lấy báo cáo số liệu', error);
         return res.status(500).json({ error: 'Lỗi hệ thống' });
     }
 }
@@ -371,4 +448,4 @@ function logOut(req, res) {
     return res.status(200).json({ message: 'Đã đăng xuất' });
 }
 
-module.exports = { getOTPSignUp, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn, getAccountInfo, getLeaderboard, getAccountRank, changePassword, getOTPResetPassword, resetPassword, changeAvatarImage, changeUsername, logOut };
+module.exports = { getOTPSignUp, signUp, verifyAccessToken, refreshAccessToken, logIn, quickLogIn, getAccountInfo, getLeaderboard, getAccountRank, changePassword, getOTPResetPassword, resetPassword, changeAvatarImage, changeUsernameAndAvatarImage, getAnalyticReport, logOut };

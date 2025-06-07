@@ -4,15 +4,18 @@ const http = require('http');
 const { Server } = require('socket.io');
 const { rateLimit } = require('express-rate-limit');
 const { slowDown } = require('express-slow-down');
+const initAssociation = require('./services/association');
 const testRouter = require('./routers/test');
 const accountRouter = require('./routers/account');
 const bookmarkRouter = require('./routers/bookmark');
 const wordRouter = require('./routers/word');
 const wordmeaningRouter = require('./routers/wordmeaning');
-
+const matchhistoryRouter = require('./routers/matchhistory');
 const gameHandler = require('./services/game');
 
 const port = process.env.APP_PORT;
+
+initAssociation();
 
 const app = express();
 
@@ -48,6 +51,8 @@ app.use('/bookmark', bookmarkRouter);
 app.use('/word', wordRouter);
 
 app.use('/wordMeaning', wordmeaningRouter);
+
+app.use('/matchHistory', matchhistoryRouter);
 
 const server = http.createServer(app);
 

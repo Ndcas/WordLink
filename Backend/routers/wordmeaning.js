@@ -3,12 +3,12 @@ const controller = require('../controllers/wordmeaning');
 
 const router = express.Router();
 
-// Cần tham số word (WordV), ipa (Phonetic) ở body
+// Cần tham số word (WordV), ipa (Phonetic) ở query
 // => word, ipa, pronunciation
-router.post('/getPronunciation', controller.getPronunciation);
+router.get('/getPronunciation', controller.getPronunciation);
 
 // Cần tham số qWord ở query
 // => word, ipa, explanation
-router.post('/explainPronunciation', controller.explainPronunciation);
+router.get('/explainPronunciation', controller.explainPronunciation);
 
 module.exports = router;

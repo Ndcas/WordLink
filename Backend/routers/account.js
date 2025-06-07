@@ -46,8 +46,12 @@ router.post('/resetPassword', controller.resetPassword);
 // Cần access token trong header Authorization: 'Bearer [access token]', aiid (AIID) trong body
 router.post('/changeAvatarImage', controller.verifyAccessToken, controller.changeAvatarImage);
 
-// Cần access token trong header Authorization: 'Bearer [access token]', username (Username) trong body
-router.post('/changeUsername', controller.verifyAccessToken, controller.changeUsername);
+// Cần access token trong header Authorization: 'Bearer [access token]', username (Username), aiid (AIID) trong body (có thể không truyền 1 trong 2 nếu không cần đổi)
+router.post('/changeUsernameAndAvatarImage', controller.verifyAccessToken, controller.changeUsernameAndAvatarImage);
+
+// Cần access token trong header Authorization: 'Bearer [access token]'
+// => numOfMatchesPlayed (số game đã chơi), pvpWin (số game PVP thắng), pvpLose (số game PVP thua), numOfWordsUsed (số từ đã dùng), avgPopularity (độ phổ biến trung bình 100 từ cuối được dùng), last100countMap (object {word: count} chứa 100 từ cuối cùng và số lần sử dụng)
+router.get('/getAnalyticReport', controller.verifyAccessToken, controller.getAnalyticReport);
 
 // Cần access token trong header Authorization: 'Bearer [access token]'
 router.post('/logOut', controller.verifyAccessToken, controller.logOut);

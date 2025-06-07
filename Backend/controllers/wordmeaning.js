@@ -3,8 +3,8 @@ const cacheClient = require('../services/cache');
 const googleAPI = require('../services/googleapi');
 
 async function getPronunciation(req, res) {
-    let word = req.body.word;
-    let ipa = req.body.ipa;
+    let word = req.query.word;
+    let ipa = req.query.ipa;
     if (!word || word.trim() === '' || !ipa || ipa.trim() === '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
@@ -42,8 +42,8 @@ async function getPronunciation(req, res) {
 }
 
 async function explainPronunciation(req, res) {
-    let word = req.body.word;
-    let ipa = req.body.ipa;
+    let word = req.query.word;
+    let ipa = req.query.ipa;
     if (!word || word.trim() === '' || !ipa || ipa.trim() === '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }

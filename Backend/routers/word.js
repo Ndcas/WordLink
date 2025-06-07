@@ -7,8 +7,8 @@ const router = express.Router();
 // => [{WordV}...]
 router.get('/getWordSuggestions', controller.getWordSuggestions);
 
-// Cần tham số word ở query
-// => popularity
-router.post('/getWordPopularity', controller.getWordPopularity);
+// Cần tham số word (WordV) ở query
+// => word (WordV), popularity (Popularity), meanings ([WordMeaning (không có WMID, WordV, POSID) kèm PartOfSpeech.POSName])
+router.get('/getWordInformation', controller.getWordInformation);
 
 module.exports = router;
