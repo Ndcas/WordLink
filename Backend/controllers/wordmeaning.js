@@ -5,7 +5,7 @@ const googleAPI = require('../services/googleapi');
 async function getPronunciation(req, res) {
     let word = req.query.word;
     let ipa = req.query.ipa;
-    if (!word || word.trim() === '' || !ipa || ipa.trim() === '') {
+    if (!word || word.trim() == '' || !ipa || ipa.trim() == '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     word = word.toLowerCase().trim();
@@ -44,7 +44,7 @@ async function getPronunciation(req, res) {
 async function explainPronunciation(req, res) {
     let word = req.query.word;
     let ipa = req.query.ipa;
-    if (!word || word.trim() === '' || !ipa || ipa.trim() === '') {
+    if (!word || word.trim() == '' || !ipa || ipa.trim() == '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     word = word.toLowerCase().trim();

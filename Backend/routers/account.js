@@ -43,10 +43,7 @@ router.post('/getOTPResetPassword', controller.getOTPResetPassword);
 // Cần email (Email), newPassword (APassword chưa hash mới), otp trong body
 router.post('/resetPassword', controller.resetPassword);
 
-// Cần access token trong header Authorization: 'Bearer [access token]', aiid (AIID) trong body
-router.post('/changeAvatarImage', controller.verifyAccessToken, controller.changeAvatarImage);
-
-// Cần access token trong header Authorization: 'Bearer [access token]', username (Username), aiid (AIID) trong body (có thể không truyền 1 trong 2 nếu không cần đổi)
+// Cần access token trong header Authorization: 'Bearer [access token]', username (Username), avatarName (AvatarImage Name) trong body (có thể không truyền 1 trong 2 nếu không cần đổi)
 router.post('/changeUsernameAndAvatarImage', controller.verifyAccessToken, controller.changeUsernameAndAvatarImage);
 
 // Cần access token trong header Authorization: 'Bearer [access token]'

@@ -19,7 +19,7 @@ function verify(socket) {
         return false;
     }
     let payload = authentication.verifyRefreshToken(refreshToken);
-    if (!payload || cacheClient.get(`refreshToken:${payload.AID}`) !== refreshToken) {
+    if (!payload || cacheClient.get(`refreshToken:${payload.AID}`) != refreshToken) {
         socket.emit('authentication failed', { error: 'Socket chứa refresh token không hợp lệ' });
         return false;
     }
@@ -41,7 +41,7 @@ function generateMatchID() {
 
 // Kiểm tra tính hợp lệ của từ
 async function verifyWord(word, usedWords) {
-    if (!word || word.trim() === '') {
+    if (!word || word.trim() == '') {
         return { result: false }
     }
     word = word.toLowerCase().trim();
@@ -50,7 +50,7 @@ async function verifyWord(word, usedWords) {
     }
     if (usedWords.length >= 1) {
         let oldWord = usedWords[usedWords.length - 1];
-        if (oldWord[oldWord.length - 1] !== word[0]) {
+        if (oldWord[oldWord.length - 1] != word[0]) {
             return { result: false }
         }
     }
@@ -86,8 +86,8 @@ async function handleWinLose(matchID, forceLossID) {
     let player2 = match.player2;
     let turn = match.turn;
     let usedWords = match.usedWords;
-    let wordUsedByPlayer1 = usedWords.filter((word, index) => index % 2 === 0);
-    let wordUsedByPlayer2 = usedWords.filter((word, index) => index % 2 === 1);
+    let wordUsedByPlayer1 = usedWords.filter((word, index) => index % 2 == 0);
+    let wordUsedByPlayer2 = usedWords.filter((word, index) => index % 2 == 1);
     let transaction = null;
     let result = {};
     try {
@@ -109,7 +109,7 @@ async function handleWinLose(matchID, forceLossID) {
         });
         let newWords1 = usedWords.filter((word) => {
             return !bookmarks1.some((bookmark) => {
-                return bookmark.WordV === word;
+                return bookmark.WordV == word;
             });
         });
         let score1 = 0;
@@ -120,9 +120,9 @@ async function handleWinLose(matchID, forceLossID) {
         }
         score1 = score1 > 0 ? score1 : 0;
         let oldScore1 = user1.Score;
-        let player1Result = (forceLossID !== player1.id && turn % 2 === 1) ? 1 : 0;
+        let player1Result = (forceLossID != player1.id && turn % 2 == 1) ? 1 : 0;
         // Nếu chơi với bot hoặc thắng thì cộng điểm, nếu chơi với người và thua thì trừ 5% số điểm sau đó cộng điểm
-        if (!player2 || player1Result === 1) {
+        if (!player2 || player1Result == 1) {
             user1.Score = Math.floor(user1.Score + score1);
         } else {
             user1.Score = Math.floor(user1.Score * 0.95 + score1);
@@ -161,15 +161,15 @@ async function handleWinLose(matchID, forceLossID) {
             });
             let newWords2 = usedWords.filter((word) => {
                 return !bookmarks2.some((bookmark) => {
-                    return bookmark.WordV === word;
+                    return bookmark.WordV == word;
                 });
             });
             let score2 = Math.floor(9 * wordUsedByPlayer2.length - sumPopularity2);
             score2 = score2 > 0 ? score2 : 0;
             let oldScore2 = user2.Score;
-            let player2Result = (forceLossID !== player2.id && turn % 2 === 0) ? 1 : 0;
+            let player2Result = (forceLossID != player2.id && turn % 2 == 0) ? 1 : 0;
             // Nếu thắng thì cộng điểm, nếu thua thì trừ 5% số điểm sau đó cộng điểm
-            if (player2Result === 1) {
+            if (player2Result == 1) {
                 user2.Score = Math.floor(user2.Score + score2);
             } else {
                 user2.Score = Math.floor(user2.Score * 0.95 + score2);
@@ -216,7 +216,7 @@ function connect(socket) {
             return;
         }
         let payload = authentication.verifyRefreshToken(refreshToken);
-        if (!payload || cacheClient.get(`refreshToken:${payload.AID}`) !== refreshToken) {
+        if (!payload || cacheClient.get(`refreshToken:${payload.AID}`) != refreshToken) {
             socket.emit('authentication failed', { error: 'Refresh token không hợp lệ' });
             return;
         }
@@ -298,7 +298,7 @@ function playWithBot(socket) {
                     }
                 }
             });
-            if (count !== 0) {
+            if (count != 0) {
                 let offset = Math.floor(Math.random() * count);
                 let wordToUse = Word.findOne({
                     where: {
@@ -323,12 +323,12 @@ function playWithBot(socket) {
                 return;
             }
             let result = await handleWinLose(socket.data.matchID, null);
-            if (result === 0) {
+            if (result == 0) {
                 socket.emit('invalid match');
                 disconnect(socket);
                 return;
             }
-            if (result === -1 || result === 1) {
+            if (result == -1 || result == 1) {
                 socket.emit('system error');
                 disconnect(socket);
                 return;
@@ -366,12 +366,12 @@ function playWithBot(socket) {
             return;
         }
         let result = await handleWinLose(socket.data.matchID, null);
-        if (result === 0) {
+        if (result == 0) {
             socket.emit('invalid match');
             disconnect(socket);
             return;
         }
-        if (result === -1 || result === 1) {
+        if (result == -1 || result == 1) {
             socket.emit('system error');
             disconnect(socket);
             return;
@@ -436,10 +436,10 @@ async function playWithPlayer(socket) {
             socket.emit('invalid match');
             return;
         }
-        if (match.turn % 2 === 0 && match.player2.id === socket.id) {
+        if (match.turn % 2 == 0 && match.player2.id == socket.id) {
             socket.emit('invalid operation');
             return;
-        } else if (match.turn % 2 === 1 && match.player1.id === socket.id) {
+        } else if (match.turn % 2 == 1 && match.player1.id == socket.id) {
             socket.emit('invalid operation');
             return;
         }
@@ -456,7 +456,7 @@ async function playWithPlayer(socket) {
                 AID: socket.data.AID,
                 WordV: wordCheck.word
             });
-            let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+            let otherPlayer = match.player1.id == socket.id ? match.player2 : match.player1;
             otherPlayer.emit('your turn', {
                 currentWord: wordCheck.word,
                 usedWords: usedWords
@@ -464,7 +464,7 @@ async function playWithPlayer(socket) {
         } catch (error) {
             console.log('Lỗi xử lý từ chơi với người', error);
             let match = matches[socket.data.matchID];
-            let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+            let otherPlayer = match.player1.id == socket.id ? match.player2 : match.player1;
             socket.emit('system error');
             disconnect(socket);
             otherPlayer.emit('system error');
@@ -484,16 +484,16 @@ async function playWithPlayer(socket) {
             socket.emit('invalid match');
             return;
         }
-        let otherPlayer = match.player1.id === socket.id ? match.player2 : match.player1;
+        let otherPlayer = match.player1.id == socket.id ? match.player2 : match.player1;
         let matchResult = await handleWinLose(socket.data.matchID);
-        if (matchResult === 0) {
+        if (matchResult == 0) {
             socket.emit('invalid match');
             otherPlayer.emit('invalid match');
             disconnect(otherPlayer);
             disconnect(socket);
             return;
         }
-        if (matchResult === -1 || matchResult === 1) {
+        if (matchResult == -1 || matchResult == 1) {
             socket.emit('system error');
             otherPlayer.emit('system error');
             disconnect(otherPlayer);
@@ -531,28 +531,28 @@ function unexpectedDisconnection(socket) {
         let player1Socket = match.player1;
         let player2Socket = match.player2;
         let matchResult = await handleWinLose(socket.data.matchID, socket.id);
-        if (matchResult === 0) {
-            if (player1Socket.id !== socket.id) {
+        if (matchResult == 0) {
+            if (player1Socket.id != socket.id) {
                 player1Socket.emit('invalid match');
                 disconnect(player1Socket);
-            } else if (player2Socket && player2Socket.id !== socket.id) {
+            } else if (player2Socket && player2Socket.id != socket.id) {
                 player2Socket.emit('invalid match');
                 disconnect(player2Socket);
             }
             return;
-        } else if (matchResult === -1) {
-            if (player1Socket.id !== socket.id) {
+        } else if (matchResult == -1) {
+            if (player1Socket.id != socket.id) {
                 player1Socket.emit('system error');
                 disconnect(player1Socket);
-            } else if (player2Socket && player2Socket.id !== socket.id) {
+            } else if (player2Socket && player2Socket.id != socket.id) {
                 player2Socket.emit('system error');
                 disconnect(player2Socket);
             }
             return;
-        } else if (matchResult === 1) {
+        } else if (matchResult == 1) {
             return;
         }
-        if (matchResult.player1.socket.id !== socket.id) {
+        if (matchResult.player1.socket.id != socket.id) {
             matchResult.player1.socket.emit('match result', {
                 score: matchResult.player1.score,
                 scoreD: matchResult.player1.scoreD,
@@ -561,7 +561,7 @@ function unexpectedDisconnection(socket) {
             });
             disconnect(matchResult.player1.socket);
         }
-        if (matchResult.player2 && matchResult.player2.socket.id !== socket.id) {
+        if (matchResult.player2 && matchResult.player2.socket.id != socket.id) {
             matchResult.player2.socket.emit('match result', {
                 score: matchResult.player2.score,
                 scoreD: matchResult.player2.scoreD,

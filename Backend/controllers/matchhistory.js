@@ -36,7 +36,7 @@ async function getMatchHistory(req, res) {
                 },
                 attributes: ['Username']
             },
-            order: ['MTime', 'DESC'],
+            order: [['MTime', 'DESC']],
             limit: 30
         });
         res.status(200).json({

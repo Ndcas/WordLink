@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 
 async function getWordSuggestions(req, res) {
     let qWord = req.query.qWord;
-    if (!qWord || qWord.trim() === '') {
+    if (!qWord || qWord.trim() == '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     qWord = qWord.trim();
@@ -29,7 +29,7 @@ async function getWordSuggestions(req, res) {
 
 async function getWordInformation(req, res) {
     let word = req.query.word;
-    if (!word || word.trim() === '') {
+    if (!word || word.trim() == '') {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     word = word.toLowerCase().trim();

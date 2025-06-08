@@ -11,6 +11,7 @@ const bookmarkRouter = require('./routers/bookmark');
 const wordRouter = require('./routers/word');
 const wordmeaningRouter = require('./routers/wordmeaning');
 const matchhistoryRouter = require('./routers/matchhistory');
+const avatarImageRouter = require('./routers/avatarimage');
 const gameHandler = require('./services/game');
 
 const port = process.env.APP_PORT;
@@ -42,6 +43,8 @@ const slower = slowDown({
 
 app.use(slower);
 
+app.use('/assets', express.static('assets'));
+
 app.use('/', testRouter);
 
 app.use('/account', accountRouter);
@@ -53,6 +56,8 @@ app.use('/word', wordRouter);
 app.use('/wordMeaning', wordmeaningRouter);
 
 app.use('/matchHistory', matchhistoryRouter);
+
+app.use('/avatarImage', avatarImageRouter);
 
 const server = http.createServer(app);
 
