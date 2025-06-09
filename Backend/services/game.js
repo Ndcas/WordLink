@@ -610,7 +610,8 @@ function unexpectedDisconnection(socket) {
                 disconnect(player2Socket);
             }
             return;
-        } else if (matchResult == -1) {
+        }
+        if (matchResult == -1) {
             if (player1Socket.id != socket.id) {
                 player1Socket.emit('system error');
                 disconnect(player1Socket);
@@ -619,7 +620,8 @@ function unexpectedDisconnection(socket) {
                 disconnect(player2Socket);
             }
             return;
-        } else if (matchResult == 1) {
+        }
+        if (matchResult == 1) {
             return;
         }
         if (matchResult.player1.socket.id != socket.id) {
@@ -643,4 +645,4 @@ function unexpectedDisconnection(socket) {
     });
 }
 
-module.exports = { connect, playWithBot, playWithPlayer, unexpectedDisconnection };
+module.exports = { connect, playWithBot, playWithPlayer, unexpectedDisconnection }
