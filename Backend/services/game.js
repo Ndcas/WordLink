@@ -293,6 +293,7 @@ function connect(socket) {
         } catch (error) {
             console.log('Lỗi khi lấy thông tin lưu vào socket', error);
             socket.emit('system error');
+            disconnect(socket);
         }
     });
 }
@@ -436,9 +437,12 @@ function playWithBot(socket) {
             disconnect(socket);
             return;
         }
-        if (result == -1 || result == 1) {
+        if (result == -1) {
             socket.emit('system error');
             disconnect(socket);
+            return;
+        }
+        if (result == 1) {
             return;
         }
         socket.emit('match result', {
