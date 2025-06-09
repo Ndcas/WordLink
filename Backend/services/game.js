@@ -8,6 +8,8 @@ const Account = require('../models/account');
 const Bookmark = require('../models/bookmark');
 const db = require('../services/database');
 
+// Thời gian cho 1 lượt chơi, tính theo ms
+const turnTime = 30000;
 let queue = [];
 let matches = {};
 
@@ -31,7 +33,7 @@ function generateMatchID() {
     let valid = false;
     let matchID = null;
     while (!valid) {
-        let matchID = `${Date.now()}-${Math.floor(Math.random() * 100)}`;
+        matchID = `${Date.now()}-${Math.floor(Math.random() * 100)}`;
         if (!matches[matchID]) {
             valid = true;
         }
@@ -202,6 +204,67 @@ async function handleWinLose(matchID, forceLossID) {
     }
 }
 
+// Xử lý khi hết giờ
+// Hệ thống trả về event invalid match, system error, match result
+function handleTimeout(matchID, lastTurn) {
+    setTimeout(async () => {
+        let match = matches[matchID];
+        if (!match) {
+            return;
+        }
+        if (lastTurn != match.turn) {
+            return;
+        }
+        let player1 = match.player1;
+        let player2 = match.player2;
+        let lossID = null;
+        if (lastTurn % 2 == 0) {
+            lossID = player1.id;
+        } else if (player2) {
+            lossID = player2.id;
+        }
+        let result = await handleWinLose(matchID, lossID);
+        if (result == 0) {
+            player1.emit('invalid match');
+            disconnect(player1);
+            if (!player2) {
+                return;
+            }
+            player2.emit('invalid match');
+            disconnect(player2);
+        }
+        if (result == -1) {
+            player1.emit('system error');
+            disconnect(player1);
+            if (!player2) {
+                return;
+            }
+            player2.emit('system error');
+            disconnect(player2);
+        }
+        if (result == 1) {
+            return;
+        }
+        player1.emit('match result', {
+            score: result.player1.score,
+            scoreD: result.player1.scoreD,
+            result: result.player1.result,
+            newWords: result.player1.newWords
+        });
+        disconnect(player1);
+        if (!player2) {
+            return;
+        }
+        player2.emit('match result', {
+            score: result.player2.score,
+            scoreD: result.player2.scoreD,
+            result: result.player2.result,
+            newWords: result.player2.newWords
+        });
+        disconnect(player2);
+    }, turnTime);
+}
+
 // Xử lý khi client kết nối sau đó gửi refresh token và tên của avatar
 // Hệ thống trả về event authentication failed, system error
 function connect(socket) {
@@ -262,6 +325,7 @@ function playWithBot(socket) {
             currentWord: null,
             usedWords: []
         });
+        handleTimeout(matchID, 0);
     });
     // Xử lý khi người chơi gửi từ
     // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result, system error
@@ -300,19 +364,20 @@ function playWithBot(socket) {
             });
             if (count != 0) {
                 let offset = Math.floor(Math.random() * count);
-                let wordToUse = Word.findOne({
+                let wordToUse = await Word.findOne({
                     where: {
                         [Op.notIn]: usedWords,
                         [Op.like]: `${wordCheck.word[word.length - 1]}%`
                     },
                     offset: offset
                 });
-                usedWords.push(wordToUse);
+                usedWords.push(wordToUse.WordV);
                 match.turn++;
                 socket.emit('your turn', {
-                    currentWord: wordToUse,
+                    currentWord: wordToUse.WordV,
                     usedWords: usedWords
                 });
+                handleTimeout(socket.data.matchID, match.turn);
                 return;
             }
             // Xử lý khi không còn từ nào để sử dụng
@@ -328,7 +393,7 @@ function playWithBot(socket) {
                 disconnect(socket);
                 return;
             }
-            if (result == -1 || result == 1) {
+            if (result == -1) {
                 socket.emit('system error');
                 disconnect(socket);
                 return;
@@ -419,6 +484,7 @@ async function playWithPlayer(socket) {
                 currentWord: null,
                 usedWords: []
             });
+            handleTimeout(matchID, 0);
         } else {
             queue.push(socket);
             socket.emit('waiting for a match');
@@ -461,6 +527,7 @@ async function playWithPlayer(socket) {
                 currentWord: wordCheck.word,
                 usedWords: usedWords
             });
+            handleTimeout(socket.data.matchID, match.turn);
         } catch (error) {
             console.log('Lỗi xử lý từ chơi với người', error);
             let match = matches[socket.data.matchID];
@@ -493,11 +560,14 @@ async function playWithPlayer(socket) {
             disconnect(socket);
             return;
         }
-        if (matchResult == -1 || matchResult == 1) {
+        if (matchResult == -1) {
             socket.emit('system error');
             otherPlayer.emit('system error');
             disconnect(otherPlayer);
             disconnect(socket);
+            return;
+        }
+        if (matchResult == 1) {
             return;
         }
         matchResult.player1.socket.emit('match result', {
