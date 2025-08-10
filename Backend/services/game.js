@@ -217,6 +217,12 @@ function handleTimeout(matchID, lastTurn) {
         }
         let player1 = match.player1;
         let player2 = match.player2;
+        if (player1.guest) {
+            player1.emit('match result', { result: 0 });
+            delete matches[player1.data.matchID];
+            disconnect(player1);
+            return;
+        }
         let lossID = null;
         if (lastTurn % 2 == 0) {
             lossID = player1.id;
