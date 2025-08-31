@@ -215,6 +215,9 @@ function handleTimeout(matchID, lastTurn) {
         if (lastTurn != match.turn) {
             return;
         }
+        if (!match.playing) {
+            return;
+        }
         let player1 = match.player1;
         let player2 = match.player2;
         if (player1.guest) {
