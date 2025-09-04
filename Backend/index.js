@@ -1,11 +1,12 @@
 const express = require('express');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const http = require('http');
 const { Server } = require('socket.io');
 const { rateLimit } = require('express-rate-limit');
 const { slowDown } = require('express-slow-down');
 const initAssociation = require('./services/association');
-const testRouter = require('./routers/test');
+const adminRouter = require('./routers/admin');
 const accountRouter = require('./routers/account');
 const bookmarkRouter = require('./routers/bookmark');
 const wordRouter = require('./routers/word');
@@ -15,6 +16,7 @@ const avatarImageRouter = require('./routers/avatarimage');
 const gameHandler = require('./services/game');
 
 const port = process.env.APP_PORT;
+const secretKey = process.env.SECRET_KEY;
 
 initAssociation();
 
@@ -27,6 +29,8 @@ app.use(express.urlencoded({
 }));
 
 app.use(express.json());
+
+app.use(cookieParser(secretKey));
 
 const limiter = rateLimit({
     windowMs: 60000,
@@ -45,7 +49,7 @@ app.use(slower);
 
 app.use('/assets', express.static('assets'));
 
-app.use('/', testRouter);
+app.use('/admin', adminRouter);
 
 app.use('/account', accountRouter);
 
