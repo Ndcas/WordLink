@@ -34,14 +34,14 @@ app.use(cookieParser(secretKey));
 
 const limiter = rateLimit({
     windowMs: 60000,
-    max: 30
+    max: 60
 });
 
 app.use(limiter);
 
 const slower = slowDown({
     windowMs: 60000,
-    delayAfter: 10,
+    delayAfter: 30,
     delayMs: () => 300
 });
 
