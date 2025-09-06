@@ -2,6 +2,9 @@ const Account = require('../models/account');
 const Admin = require('../models/admin');
 const AvatarImage = require('../models/avatarimage');
 const MatchHistory = require('../models/matchhistory');
+const Word = require('../models/word');
+const WordMeaning = require('../models/wordmeaning');
+const PartOfSpeech = require('../models/partofspeech');
 const authentication = require('../services/authentication');
 const cache = require('../services/cache');
 const { Op } = require('sequelize');
@@ -110,6 +113,7 @@ async function lockAccount(req, res) {
     }
     account.Status = 0;
     await account.save();
+    cache.del(`refreshToken:${AID}`);
     return res.json({ message: 'Khóa tài khoản thành công' });
 }
 
@@ -144,7 +148,7 @@ async function toAccountDetails(req, res) {
             as: 'Player 2'
         }
     });
-    let status = parseInt(req.query.status, 10) ?? 0;
+    let status = parseInt(req.query.status, 10) || 0;
     let message = '';
     switch (status) {
         case 1:
@@ -200,13 +204,40 @@ async function editAccount(req, res) {
     account.Score = score;
     account.Status = status;
     await account.save();
+    cache.del(`refreshToken:${AID}`);
     return res.redirect(`/admin/toAccountDetails?id=${AID}&status=1`);
 }
 
 async function toWord(req, res) {
+    let words = await Word.findAll();
     res.render('word', {
         title: 'Quản lý từ ngữ',
-        current: 'word'
+        current: 'word',
+        words: words
+    });
+}
+
+async function toWordDetails(req, res) {
+    let wordV = req.query.id;
+    if (!wordV) {
+        return res.redirect('/admin/toWord');
+    }
+    let word = await Word.findOne({
+        where: { WordV: wordV },
+        include: {
+            model: WordMeaning,
+            include: PartOfSpeech
+        }
+    });
+    if (!word) {
+        return res.redirect('/admin/toWord');
+    }
+    let posList = await PartOfSpeech.findAll();
+    let status = parseInt(req.query.status, 10) || 0;
+    return res.render('worddetails', {
+        word: word,
+        posList: posList,
+        status: status
     });
 }
 
@@ -216,4 +247,4 @@ function toChangePass(req, res) {
     });
 }
 
-module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toChangePass }
+module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toWordDetails, toChangePass }

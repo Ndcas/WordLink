@@ -23,6 +23,8 @@ router.post('/editAccount', controller.verify, controller.editAccount);
 
 router.get('/toWord', controller.verify, controller.toWord);
 
+router.get('/toWordDetails', controller.verify, controller.toWordDetails);
+
 router.get('/toChangePass', controller.verify, controller.toChangePass);
 
 module.exports = router;

@@ -1,3 +1,67 @@
 <%- include('../partials/header') %>
-<h1>Quản lý từ ngữ</h1>
+<div class="container">
+    <h3 id="loadingText" class="text-center my-5">Đang tải</h3>
+    <table id="dataTable" class="table table-striped d-none">
+        <thead>
+            <tr>
+                <th>Từ</th>
+                <th>Độ phổ biến</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% words.forEach(word => { %>
+                <tr>
+                    <td><%= word.WordV %></td>
+                    <td><%= word.Popularity %></td>
+                    <td>
+                        <a href="/admin/toWordDetails?id=<%= word.WordV %>" class="btn btn-primary">Chi tiết</a>
+                        <button class="btn btn-danger deleteButton" data-id="<%= word.WordV %>">Xóa</button>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
 <%- include('../partials/footer.ejs') %>
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            language: {
+                emptyTable: 'Không có từ nào',
+                info: 'Từ _START_ tới _END_ trong _TOTAL_ từ',
+                infoEmpty: 'Không có từ',
+                infoFiltered: '(được lọc từ _MAX_ từ)',
+                lengthMenu: 'Hiện _MENU_ từ mỗi trang',
+                search: 'Tìm kiếm: ',
+                zeroRecords: 'Không có từ phù hợp'
+            },
+            columnDefs: [{
+                searchable: false,
+                orderable: false,
+                targets: [2]
+            }]
+        });
+
+        $('#dataTable').removeClass('d-none');
+
+        $('#loadingText').addClass('d-none');
+
+        $('.deleteButton').click(function() {
+            if (!confirm('Bạn có chắc muốn xóa từ ' + $(this).data('id') + ' không?')) {
+                return;
+            }
+            $.ajax({
+                url: '/admin/deleteWord',
+                method: 'POST',
+                data: { id: $(this).data('id') },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Đã xảy ra lỗi');
+                }
+            });
+        });
+    });
+</script>
