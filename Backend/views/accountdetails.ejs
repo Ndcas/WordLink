@@ -22,7 +22,7 @@
 %>
 <body>
     <div class="container py-5">
-        <a class="btn btn-primary mb-3" href="/admin/toAccount">Trở lại</a>
+        <a class="btn btn-warning mb-3" href="/admin/toAccount">Trang trước</a>
         <h1 class="mb-5 text-center">Thông tin tài khoản</h1>
         <div class="card mb-5">
             <div class="card-body d-flex align-items-center">
@@ -36,7 +36,7 @@
                     <div class="row mb-3">
                         <label for="username" class="col-2 col-form-label">Tên tài khoản:</label>
                         <div class="col-10">
-                            <input name="username" type="text" class="form-control" value="<%= account.Username %>" minlength="3" required />
+                            <input name="username" type="text" class="form-control" value="<%= account.Username %>" minlength="3" maxlength="50" required />
                         </div>
                     </div>
                     <div class="row mb-3">

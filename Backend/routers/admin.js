@@ -23,6 +23,22 @@ router.post('/editAccount', controller.verify, controller.editAccount);
 
 router.get('/toWord', controller.verify, controller.toWord);
 
+router.get('/toAddWord', controller.verify, controller.toAddWord);
+
+router.post('/addWord', controller.verify, controller.addWord);
+
+router.post('/deleteWord', controller.verify, controller.deleteWord);
+
+router.post('/editWord', controller.verify, controller.editWord);
+
+router.post('/addMeaning', controller.verify, controller.addMeaning);
+
+router.post('/deleteMeaning', controller.verify, controller.deleteMeaning);
+
+router.get('/toEditMeaning', controller.verify, controller.toEditMeaning);
+
+router.post('/editMeaning', controller.verify, controller.editMeaning);
+
 router.get('/toWordDetails', controller.verify, controller.toWordDetails);
 
 router.get('/toChangePass', controller.verify, controller.toChangePass);

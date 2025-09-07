@@ -1,6 +1,7 @@
 <%- include('../partials/header') %>
 <div class="container">
-    <h3 id="loadingText" class="text-center my-5">Đang tải</h3>
+    <a href="/admin/toAddWord" class="btn btn-success my-5">Thêm từ mới</a>
+    <h3 id="loadingText" class="text-center mb-5">Đang tải</h3>
     <table id="dataTable" class="table table-striped d-none">
         <thead>
             <tr>
@@ -47,7 +48,7 @@
 
         $('#loadingText').addClass('d-none');
 
-        $('.deleteButton').click(function() {
+        $(document).on('click', '.deleteButton', function() {
             if (!confirm('Bạn có chắc muốn xóa từ ' + $(this).data('id') + ' không?')) {
                 return;
             }

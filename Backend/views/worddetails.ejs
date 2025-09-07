@@ -7,27 +7,13 @@
     <title>Thông tin từ ngữ</title>
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="/assets/css/datatables.min.css">
-    <style>
-        .pop {
-            height: 100px;
-            width: 100px;
-            background-color: red;
-            margin: 5px auto;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 100px;
-            font-size: 25px;
-            color: white;
-            font-weight: bold;
-        }
-    </style>
 </head>
 
 <body>
     <div class="container py-5">
-        <a class="btn btn-primary mb-3" href="/admin/toWord">Trở lại</a>
+        <a class="btn btn-warning mb-3" href="/admin/toWord">Trang trước</a>
         <h1 class="text-center mb-5">Thông tin từ ngữ</h1>
-        <div class="card">
+        <div class="card mb-5">
             <form class="container card-body" action="/admin/editWord" method="post">
                 <div class="row mb-3 justify-content-center">
                     <label for="wordV" class="col-2 col-form-label">Từ:</label>
@@ -37,23 +23,140 @@
                 <div class="row mb-3 justify-content-center">
                     <label for="popularity" class="col-2 col-form-label">Độ phổ biến:</label>
                     <div class="col-8 d-flex flex-column">
-                        <input type="number" name="popularity" class="form-control" value="<%= word.Popularity %>" min="1" max="9" step="0.1" required />
+                        <input type="number" name="popularity" class="form-control" value="<%= word.Popularity %>" min="1" max="9" step="0.01" required />
                     </div>
                 </div>
-                <% if (status != 0) { %>
-                    <div class="mb-3 text-center text-danger"><%= message %></div>
+                <% if (statusW != 0) { %>
+                    <div class="mb-3 text-center text-danger"><%= messageW %></div>
                 <% } %>
                 <div class="d-flex justify-content-center">
                     <button class="btn btn-primary me-5" type="submit">Lưu thay đổi</button>
-                    <button class="btn btn-danger" type="button">Xóa</button>
+                    <button class="btn btn-danger deleteWordButton" type="button" data-id="<%= word.WordV %>">Xóa</button>
                 </div>
             </form>
         </div>
+        <h3 class="text-center mb-5">Nghĩa của từ</h3>
+        <div class="card mb-5">
+            <form action="/admin/addMeaning" method="post" class="container card-body">
+                <input type="hidden" name="wordV" value="<%= word.WordV %>" />
+                <div class="row mb-3 justify-content-center">
+                    <label for="pos" class="col-2 col-form-label">
+                        Từ loại<span class="text-danger">*</span>:
+                    </label>
+                    <div class="col-8">
+                        <select name="pos" class="form-select" required>
+                            <% posList.forEach(item => { %>
+                                <option value="<%= item.POSID %>"><%= item.POSName %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="phonetic" class="col-2 col-form-label">Phát âm:</label>
+                    <div class="col-8">
+                        <input type="text" name="phonetic" class="form-control" maxlength="50" pattern="^(?:\/[\p{L}\p{M}ˈˌːˑ.\-\s]+\/)$" />
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="definition" class="col-2 col-form-label">
+                        Nghĩa<span class="text-danger">*</span>:
+                    </label>
+                    <div class="col-8">
+                        <textarea name="definition" class="form-control" rows="3" required maxlength="500"></textarea>
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="example" class="col-2 col-form-label">Ví dụ:</label>
+                    <div class="col-8">
+                        <input type="text" name="example" class="form-control" maxlength="500" />
+                    </div>
+                </div>
+                <% if (statusM != 0) { %>
+                    <div class="mb-3 text-center text-danger"><%= messageM %></div>
+                <% } %>
+                <button class="btn btn-primary d-flex mx-auto">Thêm nghĩa</button>
+            </form>
+        </div>
+        <table id="dataTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Từ loại</th>
+                    <th>Phát âm</th>
+                    <th>Nghĩa</th>
+                    <th>Ví dụ</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% word.WordMeanings.forEach(item => { %>
+                    <tr>
+                        <td><%= item.PartOfSpeech.POSName %></td>
+                        <td><%= item.Phonetic %></td>
+                        <td><%= item.Definition %></td>
+                        <td><%= item.Example %></td>
+                        <td>
+                            <a href="/admin/toEditMeaning?id=<%= item.WMID %>" class="btn btn-primary">Chỉnh sửa</a>
+                            <button class="btn btn-danger deleteMeaningButton" data-id="<%= item.WMID %>">Xóa</button>
+                        </td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
     </div>
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
     <script src="/assets/js/datatables.min.js"></script>
     <script>
         $(document).ready(function () {
+            $('#dataTable').DataTable({
+                language: {
+                    emptyTable: 'Không có nghĩa nào',
+                    info: 'Nghĩa _START_ tới _END_ trong _TOTAL_ nghĩa',
+                    infoEmpty: 'Không có nghĩa',
+                    infoFiltered: '(được lọc từ _MAX_ nghĩa)',
+                    lengthMenu: 'Hiện _MENU_ nghĩa mỗi trang',
+                    search: 'Tìm kiếm: ',
+                    zeroRecords: 'Không có nghĩa phù hợp'
+                },
+                ordering: false,
+                columnDefs: [{
+                    searchable: false,
+                    targets: [4]
+                }],
+            });
+
+            $('.deleteWordButton').click(function () {
+                if (!confirm('Bạn có chắc muốn xóa từ này không?')) {
+                    return;
+                }
+                $.ajax({
+                    url: '/admin/deleteWord',
+                    method: 'POST',
+                    data: { id: $(this).data('id') },
+                    success: function () {
+                        location.replace('/admin/toWord');
+                    },
+                    error: function () {
+                        alert('Đã có lỗi xảy ra khi xóa từ');
+                    }
+                });
+            });
+
+            $(document).on('click', '.deleteMeaningButton', function () {
+                if (!confirm('Bạn có chắc muốn xóa nghĩa này không?')) {
+                    return;
+                }
+                $.ajax({
+                    url: '/admin/deleteMeaning',
+                    method: 'POST',
+                    data: { id: $(this).data('id') },
+                    success: function () {
+                        location.reload();
+                    },
+                    error: function () {
+                        alert('Đã có lỗi xảy ra khi xóa nghĩa');
+                    }
+                });
+            });
         });
     </script>
 </body>
