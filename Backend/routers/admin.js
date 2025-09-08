@@ -43,4 +43,12 @@ router.get('/toWordDetails', controller.verify, controller.toWordDetails);
 
 router.get('/toChangePass', controller.verify, controller.toChangePass);
 
+router.post('/changePass', controller.verify, controller.changePass);
+
+router.get('/toResetPass', controller.toResetPass);
+
+router.post('/sendOTP', controller.sendOTP);
+
+router.post('/resetPass', controller.resetPass);
+
 module.exports = router;

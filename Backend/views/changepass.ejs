@@ -7,8 +7,45 @@
     <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
 </head>
 <body>
-    <a class="btn btn-primary my-3 ms-3" href="javascript:history.back()">Trang trước</a>
-    <h1 class="text-center">Đổi mật khẩu</h1>
+    <div class="container">
+        <a href="/admin/toReport" class="btn btn-warning my-3">Trang trước</a>
+        <h1 class="text-center mb-5">Đổi mật khẩu</h1>
+        <form id="changePassForm" action="/admin/changePass" method="post" class="container">
+            <div class="row mb-3 justify-content-center">
+                <label for="oldPass" class="col-2 col-form-label">Mật khẩu cũ:</label>
+                <div class="col-8">
+                    <input type="password" name="oldPass" class="form-control" required />
+                </div>
+            </div>
+            <div class="row mb-3 justify-content-center">
+                <label for="newPass" class="col-2 col-form-label">Mật khẩu mới:</label>
+                <div class="col-8">
+                    <input type="password" name="newPass" class="form-control" required />
+                </div>
+            </div>
+            <div class="row mb-3 justify-content-center">
+                <label for="confirmPass" class="col-2 col-form-label">Xác nhận mật khẩu mới:</label>
+                <div class="col-8">
+                    <input type="password" name="confirmPass" class="form-control" required minlength="8" maxlength="64" />
+                </div>
+            </div>
+            <% if (status != 0) { %>
+                <div class="mb-3 text-center text-danger"><%= message %></div>
+            <% } %>
+            <button class="d-flex mx-auto btn btn-primary">Đổi mật khẩu</button>
+        </form>
+    </div>
     <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('changePassForm').addEventListener('submit', function(event) {
+            let newPass = document.querySelector('input[name="newPass"]');
+            let confirmPass = document.querySelector('input[name="confirmPass"]');
+            if (newPass.value !== confirmPass.value) {
+                confirmPass.setCustomValidity('Mật khẩu mới và xác nhận mật khẩu không khớp.');
+                confirmPass.reportValidity();
+                event.preventDefault();
+            }
+        });
+    </script>
 </body>
 </html>

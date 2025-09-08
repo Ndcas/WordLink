@@ -23,7 +23,10 @@
             <% if (status != 0) { %>
                 <div class="mb-3 text-center text-danger"><%= message ?? '' %></div>
             <% } %>
-            <button type="submit" class="btn btn-primary mx-auto d-block">Đăng nhập</button>
+            <div class="d-flex justify-content-center">
+                <button type="submit" class="btn btn-primary me-5">Đăng nhập</button>
+                <a href="/admin/toResetPass" class="btn btn-warning">Quên mật khẩu</a>
+            </div>
         </form>
     </div>
     <script src="/assets/js/bootstrap.bundle.min.js"></script>

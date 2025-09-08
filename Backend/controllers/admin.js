@@ -9,6 +9,7 @@ const WordMeaning = require('../models/wordmeaning');
 const PartOfSpeech = require('../models/partofspeech');
 const authentication = require('../services/authentication');
 const cache = require('../services/cache');
+const sendEmail = require('../services/mail');
 const { Op } = require('sequelize');
 const db = require('../services/database');
 
@@ -45,15 +46,10 @@ function verify(req, res, next) {
 }
 
 async function dangNhap(req, res) {
-    let email = req.body.email;
-    let password = req.body.password;
+    let email = req.body.email?.trim();
+    let password = req.body.password?.trim();
     if (!email || !password) {
         return res.redirect('/admin?status=-1');
-    }
-    email = email.trim();
-    password = password.trim();
-    if (email.length == 0 || password.length == 0) {
-        return res.redirect('/admin?status=-2');
     }
     password = authentication.hash(password);
     let admin = await Admin.findOne({
@@ -264,13 +260,12 @@ async function toAddWord(req, res) {
 }
 
 async function addWord(req, res) {
-    let wordV = req.body.wordV;
+    let wordV = req.body.wordV?.trim();
     let popularity = parseFloat(req.body.popularity);
     if (!wordV || !popularity) {
         return res.redirect('/admin/toAddWord?status=-1');
     }
-    wordV = wordV.trim();
-    if (wordV.length == 0 || wordV.length > 30 || popularity < 1 || popularity > 9) {
+    if (wordV.length > 30 || popularity < 1 || popularity > 9) {
         return res.redirect('/admin/toAddWord?status=-1');
     }
     if (wordV.split().length > 1) {
@@ -291,6 +286,7 @@ async function addWord(req, res) {
     try {
         await newWord.save();
     } catch (error) {
+        console.log('Lỗi khi thêm từ mới', error);
         return res.redirect('/admin/toAddWord?status=-4');
     }
     return res.redirect('/admin/toAddWord?status=1');
@@ -322,6 +318,7 @@ async function deleteWord(req, res) {
         await word.destroy({ transaction: transaction });
         await transaction.commit();
     } catch (error) {
+        console.log('Lỗi khi xóa từ', error);
         return res.status(500).json({ message: 'Lỗi khi xóa từ' });
     }
     return res.json({ message: 'Xóa từ thành công' });
@@ -396,6 +393,7 @@ async function editWord(req, res) {
     try {
         await word.save();
     } catch (error) {
+        console.log('Lỗi khi chỉnh sửa từ', error);
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusW=-2`);
     }
     return res.redirect(`/admin/toWordDetails?id=${wordV}&statusW=1`);
@@ -404,9 +402,9 @@ async function editWord(req, res) {
 async function addMeaning(req, res) {
     let wordV = req.body.wordV;
     let pos = req.body.pos;
-    let phonetic = req.body.phonetic;
-    let definition = req.body.definition;
-    let example = req.body.example;
+    let phonetic = req.body.phonetic?.trim() || null;;
+    let definition = req.body.definition?.trim();
+    let example = req.body.example?.trim() || null;
     if (!wordV || !pos || !definition) {
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-1`);
     }
@@ -418,7 +416,6 @@ async function addMeaning(req, res) {
     if (!partOfSpeech) {
         return res.redirect('/admin/toWord');
     }
-    phonetic = phonetic?.trim() || null;
     if (phonetic) {
         if (phonetic.length > 50) {
             return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-1`);
@@ -428,11 +425,9 @@ async function addMeaning(req, res) {
             return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-1`);
         }
     }
-    definition = definition.trim();
-    if (definition.length == 0 || definition.length > 500) {
+    if (definition.length > 500) {
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-1`);
     }
-    example = example?.trim() || null;
     if (example && example.length > 500) {
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-1`);
     }
@@ -446,6 +441,7 @@ async function addMeaning(req, res) {
     try {
         await newMeaning.save();
     } catch (error) {
+        console.log('Lỗi khi tạo nghĩa mới', error);
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=-2`);
     }
     return res.redirect(`/admin/toWordDetails?id=${wordV}&statusM=1`);
@@ -463,6 +459,7 @@ async function deleteMeaning(req, res) {
     try {
         await meaning.destroy();
     } catch (error) {
+        console.log('Lỗi khi xóa nghĩa', error);
         return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
     }
     return res.status(200).json({ message: 'Xóa nghĩa thành công' });
@@ -502,9 +499,9 @@ async function toEditMeaning(req, res) {
 async function editMeaning(req, res) {
     let id = req.body.id;
     let pos = req.body.pos;
-    let phonetic = req.body.phonetic;
-    let definition = req.body.definition;
-    let example = req.body.example;
+    let phonetic = req.body.phonetic?.trim() || null;
+    let definition = req.body.definition?.trim();
+    let example = req.body.example?.trim() || null;
     if (!id || !pos || !definition) {
         return res.redirect('/admin/toWord');
     }
@@ -516,7 +513,6 @@ async function editMeaning(req, res) {
     if (!partOfSpeech) {
         return res.redirect('/admin/toWord');
     }
-    phonetic = phonetic?.trim() || null;
     if (phonetic) {
         if (phonetic.length > 50) {
             res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=1`);
@@ -526,11 +522,9 @@ async function editMeaning(req, res) {
             return res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=-1`);
         }
     }
-    definition = definition.trim();
-    if (definition.length == 0 || definition.length > 500) {
+    if (definition.length > 500) {
         return res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=-1`);
     }
-    example = example?.trim() || null;
     if (example && example.length > 500) {
         return res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=-1`);
     }
@@ -541,15 +535,143 @@ async function editMeaning(req, res) {
     try {
         await meaning.save();
     } catch (error) {
+        console.log('Lỗi khi chỉnh sửa nghĩa', error);
         return res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=-2`);
     }
     return res.redirect(`/admin/toEditMeaning?id=${meaning.WMID}&status=1`);
 }
 
 function toChangePass(req, res) {
+    let status = parseInt(req.query.status, 10) || 0;
+    let message = '';
+    switch (status) {
+        case 1:
+            message = 'Đổi mật khẩu thành công';
+            break;
+        case -1:
+            message = 'Vui lòng nhập đầy đủ thông tin';
+            break;
+        case -2:
+            message = 'Mật khẩu cũ không đúng';
+            break;
+        case -3:
+            message = 'Lỗi hệ thống, vui lòng thử lại sau';
+            break;
+    }
     res.render('changepass', {
-        email: req.authorization.email
+        status: status,
+        message: message
     });
 }
 
-module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toAddWord, addWord, deleteWord, toWordDetails, editWord, addMeaning, deleteMeaning, toEditMeaning, editMeaning, toChangePass }
+async function changePass(req, res) {
+    let email = req.authorization.email;
+    let oldPass = req.body.oldPass?.trim();
+    let newpass = req.body.newPass?.trim();
+    if (!oldPass || !newpass || newpass.length < 8 || newpass.length > 64) {
+        return res.redirect('/admin/toChangePass?status=-1');
+    }
+    let admin = await Admin.findOne({
+        where: {
+            Email: email,
+            APassword: authentication.hash(oldPass)
+        }
+    });
+    if (!admin) {
+        return res.redirect('/admin/toChangePass?status=-2');
+    }
+    admin.APassword = authentication.hash(newpass);
+    try {
+        await admin.save();
+        let refresh = authentication.signRefreshToken({
+            email: email
+        });
+        cache.set(`Admin:${email}`, refresh);
+        res.cookie('refreshToken', refresh, {
+            httpOnly: true,
+            signed: true
+        });
+    } catch (error) {
+        console.log('Lỗi khi đổi mật khẩu', error);
+        return res.redirect('/admin/toChangePass?status=-3');
+    }
+    return res.redirect('/admin/toChangePass?status=1');
+}
+
+function toResetPass(req, res) {
+    let status = parseInt(req.query.status, 10) || 0;
+    let message = '';
+    switch (status) {
+        case 1:
+            message = 'Đặt lại mật khẩu thành công, kiểm tra email của bạn để nhận mật khẩu mới';
+            break;
+        case -1:
+            message = 'Vui lòng nhập đầy đủ thông tin';
+            break;
+        case -2:
+            message = 'Tài khoản không tồn tại';
+            break;
+        case -3:
+            message = 'Mã OTP không đúng';
+            break;
+        case -4:
+            message = 'Lỗi hệ thống, vui lòng thử lại sau';
+            break;
+    }
+    res.render('resetpass', {
+        status: status,
+        message: message
+    });
+}
+
+async function sendOTP(req, res) {
+    let email = req.body.email?.trim();
+    if (!email) {
+        return res.status(400).json({ message: 'Thiếu email' });
+    }
+    let admin = await Admin.findByPk(email);
+    if (!admin) {
+        return res.status(404).json({ message: 'Tài khoản không tồn tại' });
+    }
+    let subject = 'Mã OTP đặt lại mật khẩu';
+    let number = Math.floor(Math.random() * 900000) + 100000;
+    let html = `<p>Mã xác thực của bạn là: <b>${number}</b></p><p>Mã có hiệu lực trong vòng 5 phút, vui lòng không chia sẻ mã này với bất kỳ ai khác.</p>`;
+    try {
+        await sendEmail(admin.Email, subject, html);
+        cache.set(`AdminOTP:${admin.Email}`, number);
+        return res.json({ message: 'Đã gửi OTP' });
+    } catch (error) {
+        console.log('Lỗi gửi OTP', error);
+        return res.status(500).json({ message: 'Lỗi gửi email' });
+    }
+}
+
+async function resetPass(req, res) {
+    let email = req.body.email?.trim();
+    let otp = req.body.otp;
+    if (!email) {
+        return res.redirect('/admin/toResetPass?status=-1');
+    }
+    let admin = await Admin.findByPk(email);
+    if (!admin) {
+        return res.redirect('/admin/toResetPass?status=-2');
+    }
+    if (cache.get(`AdminOTP:${admin.Email}`) != otp) {
+        return res.redirect('/admin/toResetPass?status=-3');
+    }
+    cache.del(`AdminOTP:${admin.Email}`);
+    let newPass = authentication.hash(Math.random().toString());
+    admin.APassword = authentication.hash(newPass);
+    try {
+        await admin.save();
+        let subject = 'Mật khẩu mới';
+        let html = `<p>Mật khẩu mới của bạn là: <b>${newPass}</b></p>`;
+        await sendEmail(admin.Email, subject, html);
+        return res.redirect('/admin/toResetPass?status=1');
+    } catch (error) {
+        console.log('Lỗi khi đặt lại mật khẩu', error);
+        return res.redirect('/admin/toResetPass?status=-4');
+    }
+}
+
+module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toAddWord, addWord, deleteWord, toWordDetails, editWord, addMeaning, deleteMeaning, toEditMeaning, editMeaning, toChangePass, changePass, toResetPass, sendOTP, resetPass }
