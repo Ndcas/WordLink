@@ -384,8 +384,10 @@ function playWithBot(socket) {
                 let offset = Math.floor(Math.random() * count);
                 let wordToUse = await Word.findOne({
                     where: {
-                        [Op.notIn]: usedWords,
-                        [Op.like]: `${wordCheck.word[word.length - 1]}%`
+                        WordV: {
+                            [Op.notIn]: usedWords,
+                            [Op.like]: `${wordCheck.word[wordCheck.word.length - 1]}%`
+                        }
                     },
                     offset: offset
                 });

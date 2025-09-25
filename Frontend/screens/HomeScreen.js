@@ -110,12 +110,12 @@ export default function HomeScreen() {
             {/* Menu */}
             <Text style={styles.playTitle}>LET’S PLAY</Text>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('PlayWithBotScreen')}>
                 <FontAwesome5 name="chalkboard-teacher" size={22} color="#F3C623" />
                 <Text style={styles.menuText}>TRAINING MODE</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.menuButton}>
+            <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('MultiplayerScreen')}>
                 <FontAwesome5 name="crosshairs" size={25} color="#F3C623" />
                 <Text style={styles.menuText}>MULTIPLAYER</Text>
             </TouchableOpacity>

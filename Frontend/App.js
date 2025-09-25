@@ -12,6 +12,8 @@ import { useFonts } from 'expo-font';
 import NicknameScreen from './screens/NicknameScreen';
 import ChooseAvatarScreen from './screens/ChooseAvatarScreen';
 import AccountInfoScreen from './screens/AccountInfoScreen';
+import PlayWithBotScreen from './screens/PlayWithBotScreen';
+import MultiplayerScreen from './screens/MultiplayerScreen'
 
 
 const Stack = createNativeStackNavigator();
@@ -30,10 +32,10 @@ function MainTabs() {
             return <FontAwesome5 name="book" size={size} color={color} />;
           } else if (route.name === 'Leaderboard') {
             return <FontAwesome5 name="trophy" size={size} color={color} />;
-          }  else if (route.name === 'AccountInfo') {
+          } else if (route.name === 'AccountInfo') {
             return <FontAwesome5 name="users-cog" size={size} color={color} />;
-          } 
-          
+          }
+
         },
         tabBarActiveTintColor: '#10375C',
         tabBarInactiveTintColor: 'gray',
@@ -59,7 +61,7 @@ export default function App() {
   });
 
   if (!fontsLoaded) {
-    return null; 
+    return null;
   }
 
   return (
@@ -69,9 +71,11 @@ export default function App() {
         <Stack.Screen name="LoginScreen" component={LoginScreen} />
         <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
         <Stack.Screen name="NicknameScreen" component={NicknameScreen} />
-        <Stack.Screen name="ChooseAvatarScreen" component={ChooseAvatarScreen} /> 
-        <Stack.Screen name="SplashScreen" component={SplashScreen} /> 
-        <Stack.Screen name="AccountInfoScreen" component={AccountInfoScreen} /> 
+        <Stack.Screen name="ChooseAvatarScreen" component={ChooseAvatarScreen} />
+        <Stack.Screen name="SplashScreen" component={SplashScreen} />
+        <Stack.Screen name="AccountInfoScreen" component={AccountInfoScreen} />
+        <Stack.Screen name="PlayWithBotScreen" component={PlayWithBotScreen} />
+        <Stack.Screen name="MultiplayerScreen" component={MultiplayerScreen} />
 
         {/* Main App (có Tab Navigator) */}
         <Stack.Screen name="MainTabs" component={MainTabs} />
