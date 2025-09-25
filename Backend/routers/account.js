@@ -8,18 +8,18 @@ const router = express.Router();
 router.post('/getOTPSignUp', controller.getOTPSignUp);
 
 // Cần refresh token trong header Authorization: 'Bearer [refresh token]'
-// => accessToken
+// => accessToken và expireMs (thời gian hiệu lực của access token tính bằng ms)
 router.post('/refreshAccessToken', controller.refreshAccessToken);
 
 // Cần tham số username (Username), password (APassword chưa hash), email (Email), otp trong body
 router.post('/signUp', controller.signUp);
 
 // Cần tham số email (Email), password (APassword chưa hash) trong body
-// => accessToken và refreshToken
+// => accessToken, refreshToken và expireMs (thời gian hiệu lực của access token tính bằng ms)
 router.post('/logIn', controller.logIn);
 
 // Cần refresh token trong header Authorization: 'Bearer [refresh token]'
-// => accessToken và refreshToken
+// => accessToken, refreshToken và expireMs (thời gian hiệu lực của access token tính bằng ms)
 router.post('/quickLogIn', controller.quickLogIn);
 
 // Cần access token trong header Authorization: 'Bearer [access token]'
