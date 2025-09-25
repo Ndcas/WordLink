@@ -1,23 +1,90 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useState, useEffect } from 'react';
 
 export default function HomeScreen() {
+
     const navigation = useNavigation();
+    const [username, setUsername] = useState("Guest");
+    const [avatar, setAvatar] = useState(require('../assets/oggy.jpg'));
+    const [score, setScore] = useState(0);
+    const [rank, setRank] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadUserInfo = async () => {
+            try {
+                const accessToken = await AsyncStorage.getItem("accessToken");
+                const storedUsername = await AsyncStorage.getItem("username");
+                if (storedUsername) setUsername(storedUsername);
+
+                if (!accessToken) {
+                    setLoading(false);
+                    return;
+                }
+
+                // Lấy thông tin account
+                const infoUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`;
+                const infoRes = await fetch(infoUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (infoRes.ok) {
+                    const infoData = await infoRes.json();
+                    setUsername(infoData.Username || "Guest");
+                    setScore(infoData.Score || 0);
+                    if (infoData.AvatarImage) setAvatar({ uri: infoData.AvatarImage });
+                }
+
+                // Lấy xếp hạng
+                const rankUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/getAccountRank`;
+                const rankRes = await fetch(rankUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (rankRes.ok) {
+                    const rankData = await rankRes.json();
+                    setRank(rankData.rank || null);
+                }
+            } catch (err) {
+                console.error("Lỗi lấy thông tin hoặc xếp hạng tài khoản:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        loadUserInfo();
+    }, []);
+
+    if (loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <ActivityIndicator size="large" color="#10375C" style={{ marginTop: 50 }} />
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             {/* Header */}
             <View style={styles.header}>
                 <Text style={styles.title}>WORDLINK</Text>
-                <Image
-                    source={require('../assets/oggy.jpg')} // Thay bằng ảnh avatar của bạn
-                    style={styles.avatar}
-                />
+                <TouchableOpacity onPress={() => navigation.navigate('AccountInfoScreen')}>
+                    <Image source={avatar} style={styles.avatar} />
+                </TouchableOpacity>
             </View>
 
-            <Text style={styles.greeting}>HI OGGY, HOW ARE YOU TODAY? 👋</Text>
+            <Text style={styles.greeting}>HI {username.toUpperCase()}, HOW ARE YOU TODAY?</Text>
 
             {/* Rank and Point */}
             <View style={styles.rankBox}>
@@ -26,7 +93,7 @@ export default function HomeScreen() {
                     <FontAwesome5 name="crown" size={24} color="#F3C623" style={styles.rankIcon} />
                     <View style={styles.rankTextGroup}>
                         <Text style={styles.rankLabel}>RANK</Text>
-                        <Text style={styles.rankValue}>200/1000</Text>
+                        <Text style={styles.rankValue}>{rank !== null ? rank : '-'}</Text>
                     </View>
                 </View>
 
@@ -35,11 +102,11 @@ export default function HomeScreen() {
                     <FontAwesome5 name="award" size={24} color="#F3C623" style={styles.rankIcon} />
                     <View style={styles.rankTextGroup}>
                         <Text style={styles.rankLabel}>POINT</Text>
-                        <Text style={styles.rankValue}>100000</Text>
+                        <Text style={styles.rankValue}>{score}</Text>
                     </View>
                 </View>
             </View>
-
+            
             {/* Menu */}
             <Text style={styles.playTitle}>LET’S PLAY</Text>
 
@@ -52,27 +119,6 @@ export default function HomeScreen() {
                 <FontAwesome5 name="crosshairs" size={25} color="#F3C623" />
                 <Text style={styles.menuText}>MULTIPLAYER</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuButton}>
-                <MaterialIcons name="book" size={25} color="#F3C623" />
-                <Text style={styles.menuText}>DICTIONARY</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuButton}>
-                <Ionicons name="people" size={25} color="#F3C623" />
-                <Text style={styles.menuText}>FRIENDS</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuButton}>
-                <Ionicons name="settings" size={25} color="#F3C623" />
-                <Text style={styles.menuText}>OPTIONS</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.menuButton} onPress={() => navigation.navigate('Leaderboard')}>
-                <FontAwesome5 name="trophy" size={20} color="#F3C623" />
-                <Text style={styles.menuText}>LEADERBOARD</Text>
-            </TouchableOpacity>
-
             {/* Leaderboards */}
             {/* <Text style={styles.leaderboardsTitle}>LEADERBOARDS</Text>
       <View style={styles.leaderboards}>

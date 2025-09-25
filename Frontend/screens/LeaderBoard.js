@@ -10,11 +10,11 @@ const LeaderboardScreen = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
-    const limit = 10; // mỗi trang hiển thị 10 user
+    const limit = 6; // mỗi trang hiển thị 10 user
 
     const totalPages = Math.ceil(allData.length / limit);
 
-    const API_URL="http://192.168.1.14:8080";
+    const API_URL=process.env.EXPO_PUBLIC_API_URL;;
 
     async function getLeaderboard() {
         try {
@@ -63,12 +63,11 @@ const LeaderboardScreen = () => {
         <SafeAreaView style={styles.container}>
             <View style={styles.header}>
                 <View style={styles.titleGroup}>
-                    <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                    {/* <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
                         <FontAwesome5 name="chevron-circle-left" size={30} color="#10375C" />
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
                     <Text style={styles.title}>LEADERBOARD</Text>
                 </View>
-                <Image source={require('../assets/oggy.jpg')} style={styles.avatar} />
             </View>
 
             <View style={styles.searchContainer}>
@@ -177,6 +176,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         height: 60,
         elevation: 3,
+        marginTop:-10
     },
 
     searchIcon: {
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
 
     title: {
         fontFamily: 'Bungee',
-        fontSize: 24,
+        fontSize: 32,
         color: '#10375c',
     },
     listContainer: {
@@ -211,11 +211,16 @@ const styles = StyleSheet.create({
         paddingTop: 10,
     },
     listWrapper: {
-        backgroundColor:'white',
-        borderRadius:20,
-        elevation:3,
-        marginTop:15,
-        padding:10
+        // backgroundColor:'white',
+        // borderRadius:20,
+        // borderLeftWidth:3,
+        // borderTopColor:'#10375C',
+        // borderTopWidth:3,
+        // borderRightWidth:3,
+        // borderLeftColor:'#F3C623',
+        // borderRightColor: '#F3C623',
+        // marginTop:20,
+        // paddingHorizontal: 5
     },
     rank: {
         fontFamily: 'Bungee',
