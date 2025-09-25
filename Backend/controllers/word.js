@@ -56,10 +56,23 @@ async function getWordInformation(req, res) {
             },
             raw: true
         });
+
+        // loại bỏ nghĩa trùng lặp
+        let uniqueMeanings = [];
+        let seen = new Set();
+
+        for (let m of meanings) {
+            const key = (m.Definition || "") + "-" + (m["PartOfSpeech.POSName"] || "");
+            if (!seen.has(key)) {
+                seen.add(key);
+                uniqueMeanings.push(m);
+            }
+        }
+        
         let result = {
             word: word,
             popularity: popularity.Popularity,
-            meanings: meanings
+            meanings: uniqueMeanings,
         }
         cacheClient.set(`wordInformation:${word}`, result);
         return res.status(200).json(result);
