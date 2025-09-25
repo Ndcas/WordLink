@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-const API_URL = "http://192.168.1.10:8080"; // Android emulator, đổi thành IP backend thật khi test máy thật
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const SignUpScreen = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -31,14 +31,14 @@ const SignUpScreen = ({ navigation }) => {
       const res = await fetch(`${API_URL}/account/getOTPSignUp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ Email: email.trim() }), // Backend yêu cầu "Email"
+        body: JSON.stringify({ email: email.trim() }), // Backend yêu cầu "Email"
       });
       const data = await res.json();
       if (res.ok) {
         Alert.alert("Thành công", "OTP đã được gửi về email");
         setOtpSent(true);
       } else {
-        Alert.alert("Lỗi", data.message || "Không thể gửi OTP");
+        Alert.alert("Lỗi", data.error || "Không thể gửi OTP");
       }
     } catch (err) {
       Alert.alert("Lỗi", "Không thể kết nối server");
@@ -58,39 +58,26 @@ const SignUpScreen = ({ navigation }) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          Username: username.trim(),
-          APassword: password.trim(),
-          Email: email.trim(),
+          username: username.trim(),
+          password: password.trim(),
+          email: email.trim(),
           otp: otp.trim(),
         }),
       });
       const data = await res.json();
+
+      if (res.ok) {
+        Alert.alert("Đăng ký thành công");
+        navigation.replace("LoginScreen");
+        return;
+      }
 
       if (!res.ok) {
         Alert.alert("Lỗi", data.message || "Đăng ký thất bại");
         return;
       }
 
-      // Đăng ký xong → login
-      const loginRes = await fetch(`${API_URL}/account/logIn`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Email: email.trim(),
-          APassword: password.trim(),
-        }),
-      });
-      const loginData = await loginRes.json();
-
-      if (loginRes.ok) {
-        await AsyncStorage.setItem("accessToken", loginData.accessToken);
-        await AsyncStorage.setItem("refreshToken", loginData.refreshToken);
-
-        Alert.alert("Thành công", "Đăng ký & đăng nhập thành công");
-        navigation.replace("Nickname");
-      } else {
-        Alert.alert("Lỗi", loginData.message || "Đăng nhập thất bại");
-      }
+      
     } catch (err) {
       Alert.alert("Lỗi", "Không thể kết nối server");
     }

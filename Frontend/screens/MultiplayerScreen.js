@@ -15,7 +15,7 @@ import io from "socket.io-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function MultiplayerScreen({ navigation }) {
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://10.0.2.2:8080";
+  const API_URL = process.env.EXPO_PUBLIC_API_URL;
   const socketRef = useRef(null);
 
   const [status, setStatus] = useState("Đang kết nối...");
@@ -42,7 +42,41 @@ export default function MultiplayerScreen({ navigation }) {
         setStatus("Đã kết nối");
         socket.emit("authentication", refreshToken, avatarImage);
         // Vào multiplayer ngay
+
+      });
+
+      socket.on("authentication failed", () => {
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'LoginScreen',
+            },
+          ],
+        });
+      });
+
+      socket.on("authenticated", () => {
         socket.emit("find match");
+      });
+
+      socket.on("invalid operation", () => {
+        Alert.alert("operation failed");
+      });
+
+      socket.on("invalid match", () => {
+        Alert.alert("invalid match");
+      });
+
+      socket.on("system error", () => {
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Home',
+            },
+          ],
+        });
       });
 
       socket.on("waiting for a match", () => {
@@ -64,17 +98,28 @@ export default function MultiplayerScreen({ navigation }) {
         setStatus("Lượt của bạn");
       });
 
+      newSocket.on("invalid word", () => {
+        Alert.alert("❌ Lỗi", "Từ không hợp lệ!");
+      });
+
+      newSocket.on("valid word", (data) => {
+        setCurrentWord(data?.currentWord);
+        setUsedWords(data?.usedWords || []);
+      });
+
       socket.on("match result", (data) => {
         setInMatch(false);
         setIsMyTurn(false);
-        const txt =
-          data?.result === 1
-            ? "Bạn thắng!"
-            : data?.result === -1
-            ? "Bạn thua!"
-            : "Hòa";
-        Alert.alert("Kết quả", `${txt}\nScore: ${data?.score ?? "-"}`);
-        navigation.goBack();
+        const txt = data.result == 1 ? "Bạn thắng" : "Bạn thua";
+        Alert.alert("Kết quả", `${txt}\nScore: ${data?.scoreD ?? "-"}`);
+        navigation.reset({
+          index: 0,
+          routes: [
+            {
+              name: 'Home',
+            },
+          ],
+        });
       });
 
       socket.connect();
@@ -89,6 +134,12 @@ export default function MultiplayerScreen({ navigation }) {
 
   const sendWord = () => {
     if (!input.trim()) return;
+    let sendWord = input.trim().toLowerCase();
+    setCurrentWord(sendWord);
+    if (sendWord[0] != currentWord[currentWord.length - 1]) {
+      Alert.alert("Từ không hợp lệ");
+      return;
+    }
     if (socketRef.current) {
       socketRef.current.emit("send word to player", input.trim());
       setInput("");

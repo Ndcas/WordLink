@@ -281,7 +281,7 @@ function handleTimeout(matchID, lastTurn) {
 }
 
 // Xử lý khi client kết nối sau đó gửi refresh token và tên của avatar
-// Hệ thống trả về event authentication failed, system error
+// Hệ thống trả về event authentication failed, system error, authenticated
 function connect(socket) {
     socket.on('authentication', async (refreshToken, avatarImage) => {
         if (!refreshToken) {
@@ -306,6 +306,7 @@ function connect(socket) {
             socket.data.refreshToken = refreshToken;
             socket.data.avatarImage = avatarImage;
             socket.data.guest = false;
+            socket.emit('authenticated');
         } catch (error) {
             console.log('Lỗi khi lấy thông tin lưu vào socket', error);
             socket.emit('system error');
@@ -515,7 +516,7 @@ async function playWithPlayer(socket) {
         }
     });
     // Xử lý khi người chơi gửi từ
-    // Hệ thống trả về event invalid operation, invalid match, invalid word, your turn, match result
+    // Hệ thống trả về event invalid operation, invalid match, invalid word, valid word, your turn, match result
     socket.on('send word to player', async (word) => {
         if (!verify(socket) || !socket.data.matchID) {
             socket.emit('invalid operation');
@@ -547,6 +548,10 @@ async function playWithPlayer(socket) {
                 WordV: wordCheck.word
             });
             let otherPlayer = match.player1.id == socket.id ? match.player2 : match.player1;
+            socket.emit('valid word', {
+                currentWord: wordCheck.word,
+                usedWords: usedWords
+            });
             otherPlayer.emit('your turn', {
                 currentWord: wordCheck.word,
                 usedWords: usedWords
@@ -615,6 +620,11 @@ async function playWithPlayer(socket) {
 // Hệ thống trả về event invalid match, system error, match result
 function unexpectedDisconnection(socket) {
     socket.on('disconnect', async () => {
+        let index = queue.findIndex(item => item.data.AID == socket.data.AID);
+        if (index != -1) {
+            delete queue[index];
+            return;
+        }
         if (!socket.data.matchID) {
             return;
         }

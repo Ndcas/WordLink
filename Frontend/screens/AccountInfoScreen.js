@@ -45,17 +45,24 @@ export default function AccountInfoScreen() {
 
   //Đăng xuất
   const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('accessToken');
-      await AsyncStorage.removeItem('refreshToken');
-      await AsyncStorage.removeItem('username');
-      navigation.replace('LoginScreen');
-    } catch (err) {
-      console.error('Lỗi logout:', err);
-      Alert.alert('Lỗi', 'Đăng xuất thất bại.');
-    }
-  };
+    let accessToken = AsyncStorage.getItem('accessToken');
 
+    const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/logOut`;
+    fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    await AsyncStorage.removeItem('accessToken');
+    await AsyncStorage.removeItem('username');
+    await AsyncStorage.removeItem('refreshToken');
+    navigation.replace('LoginScreen');
+    console.error('Lỗi logout:', err);
+    Alert.alert('Lỗi', 'Đăng xuất thất bại.');
+  };
 
   if (loading) {
     return (

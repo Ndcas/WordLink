@@ -9,7 +9,7 @@ export default function HomeScreen() {
 
     const navigation = useNavigation();
     const [username, setUsername] = useState("Guest");
-    const [avatar, setAvatar] = useState(require('../assets/oggy.jpg'));
+    const [avatar, setAvatar] = useState();
     const [score, setScore] = useState(0);
     const [rank, setRank] = useState(null);
     const [loading, setLoading] = useState(true);

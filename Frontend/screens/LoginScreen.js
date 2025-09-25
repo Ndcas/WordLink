@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Dimensions, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
@@ -14,6 +14,34 @@ const LoginScreen = () => {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      console.log((await AsyncStorage.getItem('rememberMe')));
+
+      if ((await AsyncStorage.getItem('rememberMe')) == "1") {
+        let refreshToken = await AsyncStorage.getItem("refreshToken");
+
+        let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/quickLogIn`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+            "Content-Type": "application/json"
+          },
+        });
+        if (res.ok) {
+          let data = await res.json();
+          await AsyncStorage.setItem('accessToken', data.accessToken);
+          await AsyncStorage.setItem('refreshToken', data.refreshToken);
+          global.expireMs = data.expireMs + Date.now();
+
+          navigation.replace('MainTabs');
+        }
+
+      }
+    })();
+
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -36,9 +64,7 @@ const LoginScreen = () => {
         await AsyncStorage.setItem("username", res.data.Username || email);
 
         // Nếu muốn rememberMe → giữ refreshToken lâu hơn
-        if (rememberMe) {
-          console.log("Người dùng chọn Remember me");
-        }
+        await AsyncStorage.setItem('rememberMe', rememberMe ? "1" : "0");
 
         // Chuyển sang Home (hoặc màn chính của app)
         navigation.replace('MainTabs');
