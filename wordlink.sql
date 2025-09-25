@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th6 08, 2025 lúc 10:15 AM
+-- Thời gian đã tạo: Th9 25, 2025 lúc 09:31 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
--- Phiên bản PHP: 8.2.12
+-- Phiên bản PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -79,7 +79,21 @@ CREATE TABLE `avatarimage` (
 --
 
 INSERT INTO `avatarimage` (`AIID`, `Name`) VALUES
-(1, 'default.jpg');
+(2, 'avatar-cute-1.webp'),
+(10, 'avatar-cute-10.webp'),
+(11, 'avatar-cute-18.webp'),
+(3, 'avatar-cute-2.webp'),
+(12, 'avatar-cute-22.webp'),
+(13, 'avatar-cute-23.webp'),
+(14, 'avatar-cute-24.webp'),
+(15, 'avatar-cute-25.webp'),
+(4, 'avatar-cute-3.webp'),
+(16, 'avatar-cute-31.webp'),
+(5, 'avatar-cute-4.webp'),
+(6, 'avatar-cute-5.webp'),
+(7, 'avatar-cute-7.webp'),
+(8, 'avatar-cute-8.webp'),
+(9, 'avatar-cute-9.webp');
 
 -- --------------------------------------------------------
 
@@ -97554,7 +97568,7 @@ ALTER TABLE `account`
 -- AUTO_INCREMENT cho bảng `avatarimage`
 --
 ALTER TABLE `avatarimage`
-  MODIFY `AIID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `AIID` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT cho bảng `matchhistory`
