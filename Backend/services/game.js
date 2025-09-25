@@ -283,7 +283,6 @@ function handleTimeout(matchID, lastTurn) {
 // Xử lý khi client kết nối sau đó gửi refresh token và tên của avatar
 // Hệ thống trả về event authentication failed, system error
 function connect(socket) {
-    socket.data = {};
     socket.on('authentication', async (refreshToken, avatarImage) => {
         if (!refreshToken) {
             socket.emit('authentication failed', { error: 'Thiếu refresh token' });
@@ -299,7 +298,7 @@ function connect(socket) {
             return;
         }
         try {
-            let account = await Account.findOne({ AID: payload.AID });
+            let account = await Account.findOne({ where: { AID: payload.AID } });
             socket.data.AID = payload.AID;
             socket.data.Username = account.Username;
             socket.data.refreshToken = refreshToken;
