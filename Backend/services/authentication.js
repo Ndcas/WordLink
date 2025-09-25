@@ -3,8 +3,8 @@ const jsonwebtoken = require('jsonwebtoken');
 
 const secretKey = process.env.SECRET_KEY;
 const refreshKey = process.env.REFRESH_KEY;
-const secretTTL = process.env.SECRET_TTL;
-const refreshTTL = process.env.REFRESH_TTL;
+const secretTTL = parseInt(process.env.SECRET_TTL);
+const refreshTTL = parseInt(process.env.REFRESH_TTL);
 
 function hash(string) {
     return sha256(string);

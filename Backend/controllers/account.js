@@ -12,6 +12,7 @@ const db = require('../services/database');
 const { QueryTypes, fn, col, Op } = require('sequelize');
 
 const appEmail = process.env.APP_EMAIL;
+const accessTokenExpireMs = parseInt(process.env.SECRET_TTL);
 
 async function getOTPSignUp(req, res) {
     let email = req.body.email;
@@ -73,7 +74,8 @@ function refreshAccessToken(req, res) {
     let accessToken = authentication.signAccessToken(payload);
     return res.status(200).json({
         message: 'Làm mới token thành công',
-        accessToken: accessToken
+        accessToken: accessToken,
+        expireMs: accessTokenExpireMs
     });
 }
 
@@ -127,7 +129,6 @@ async function signUp(req, res) {
 }
 
 async function logIn(req, res) {
-    console.log("Body nhận được từ client:", req.body);
     let email = req.body.email;
     let password = req.body.password;
     if (!email || !password || !validator.isEmail(email)) {
@@ -153,7 +154,8 @@ async function logIn(req, res) {
         return res.status(200).json({
             message: 'Đăng nhập thành công',
             accessToken: accessToken,
-            refreshToken: refreshToken
+            refreshToken: refreshToken,
+            expireMs: accessTokenExpireMs
         });
     } catch (error) {
         console.log('Lỗi đăng nhập', error);
@@ -183,7 +185,8 @@ async function quickLogIn(req, res) {
     return res.status(200).json({
         message: 'Đăng nhập thành công',
         accessToken: accessToken,
-        refreshToken: refreshToken
+        refreshToken: refreshToken,
+        expireMs: accessTokenExpireMs
     });
 }
 

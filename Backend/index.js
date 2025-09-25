@@ -15,7 +15,7 @@ const matchhistoryRouter = require('./routers/matchhistory');
 const avatarImageRouter = require('./routers/avatarimage');
 const gameHandler = require('./services/game');
 
-const port = process.env.APP_PORT;
+const port = parseInt(process.env.APP_PORT);
 const secretKey = process.env.SECRET_KEY;
 
 initAssociation();

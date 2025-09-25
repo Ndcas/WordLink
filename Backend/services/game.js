@@ -84,6 +84,7 @@ async function handleWinLose(matchID, forceLossID) {
         return 1;
     }
     match.playing = false;
+    clearTimeout(match.timeout);
     let player1 = match.player1;
     let player2 = match.player2;
     let turn = match.turn;
@@ -207,7 +208,12 @@ async function handleWinLose(matchID, forceLossID) {
 // Xử lý khi hết giờ
 // Hệ thống trả về event invalid match, system error, match result
 function handleTimeout(matchID, lastTurn) {
-    setTimeout(async () => {
+    let match = matches[matchID];
+    if (!match) {
+        return;
+    }
+    clearTimeout(match.timeout);
+    match.timeout = setTimeout(async () => {
         let match = matches[matchID];
         if (!match) {
             return;
@@ -329,7 +335,8 @@ function playWithBot(socket) {
             player2: null,
             turn: 0,
             usedWords: [],
-            playing: true
+            playing: true,
+            timeout: null
         };
         socket.emit('your turn', {
             currentWord: null,
@@ -481,7 +488,8 @@ async function playWithPlayer(socket) {
                 player2: socket,
                 turn: 0,
                 usedWords: [],
-                playing: true
+                playing: true,
+                timeout: null
             };
             otherPlayer.data.matchID = matchID;
             socket.data.matchID = matchID;
