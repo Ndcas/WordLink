@@ -316,7 +316,7 @@ function connect(socket) {
 
 // Thông báo sắp ngắt kết nối sau đó ngắt kết nối
 function disconnect(socket) {
-    socket.emit('disconnecting');
+    socket.emit('expected disconnection');
     socket.disconnect();
 }
 
