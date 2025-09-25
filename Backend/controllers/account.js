@@ -215,7 +215,7 @@ async function getAccountInfo(req, res) {
 
 async function getLeaderboard(req, res) {
     try {
-        let leaderboard = await db.query(`SELECT rank() OVER(ORDER BY Score Desc) 'Rank', Username, Score FROM Account WHERE Status = 1 LIMIT 100`, {
+        let leaderboard = await db.query(`SELECT rank() OVER(ORDER BY Score Desc) 'Rank', Username, Score FROM Account WHERE Status = 1 ORDER BY Rank ASC LIMIT 100`, {
             type: QueryTypes.SELECT
         });
         return res.status(200).json(leaderboard);

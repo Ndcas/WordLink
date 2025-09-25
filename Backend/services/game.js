@@ -298,7 +298,9 @@ function connect(socket) {
             return;
         }
         try {
-            let account = await Account.findOne({ where: { AID: payload.AID } });
+            let account = await Account.findOne({
+                where: { AID: payload.AID }
+            });
             socket.data.AID = payload.AID;
             socket.data.Username = account.Username;
             socket.data.refreshToken = refreshToken;
