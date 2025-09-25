@@ -14,7 +14,7 @@ const LeaderboardScreen = () => {
 
     const totalPages = Math.ceil(allData.length / limit);
 
-    const API_URL=process.env.EXPO_PUBLIC_API_URL;;
+    const API_URL=process.env.EXPO_PUBLIC_API_URL;
 
     async function getLeaderboard() {
         try {

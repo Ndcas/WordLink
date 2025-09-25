@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chỉnh sửa nghĩa từ</title>
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container py-5">
+        <a class="btn btn-warning mb-5" href="/admin/toWordDetails?id=<%= meaning.WordV %>">Trang trước</a>
+        <h1 class="text-center mb-5">Chỉnh sửa nghĩa từ</h1>
+        <div class="card">
+            <form class="container card-body" action="/admin/editMeaning" method="post">
+                <input type="hidden" name="id" value="<%= meaning.WMID %>" />
+                <div class="row mb-3 justify-content-center">
+                    <label for="wordV" class="col-2 col-form-label">Từ:</label>
+                    <b class="col-8"><%= meaning.WordV %></b>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="pos" class="col-2 col-form-label">
+                        Từ loại<span class="text-danger">*</span>:
+                    </label>
+                    <div class="col-8">
+                        <select name="pos" class="form-select" required>
+                            <% posList.forEach(item => { %>
+                                <option value="<%= item.POSID %>" <%= item.POSID == meaning.POSID ? 'selected' : '' %>><%= item.POSName %></option>
+                            <% }); %>
+                        </select>
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="phonetic" class="col-2 col-form-label">Phát âm:</label>
+                    <div class="col-8">
+                        <input type="text" name="phonetic" class="form-control" maxlength="50" pattern="\/[\p{L}\p{M}ˈˌːˑ.\-\s]+\/" value="<%= meaning.Phonetic %>" />
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="definition" class="col-2 col-form-label">
+                        Nghĩa<span class="text-danger">*</span>:
+                    </label>
+                    <div class="col-8">
+                        <textarea name="definition" class="form-control" rows="3" required maxlength="500"><%= meaning.Definition %></textarea>
+                    </div>
+                </div>
+                <div class="row mb-3 justify-content-center">
+                    <label for="example" class="col-2 col-form-label">Ví dụ:</label>
+                    <div class="col-8">
+                        <input type="text" name="example" class="form-control" maxlength="500" value="<%= meaning.Example %>" />
+                    </div>
+                </div>
+                <% if (status != 0) { %>
+                    <div class="mb-3 text-center text-danger"><%= message %></div>
+                <% } %>
+                <button class="btn btn-primary d-flex mx-auto">Xác nhận</button>
+            </form>
+        </div>
+    </div>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

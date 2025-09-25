@@ -78,19 +78,18 @@ function refreshAccessToken(req, res) {
 }
 
 async function signUp(req, res) {
-    let username = req.body.username;
-    let password = req.body.password;
-    let email = req.body.email;
+    let username = req.body.username?.trim();
+    let password = req.body.password?.trim();
+    let email = req.body.email?.trim();
     let otp = req.body.otp;
     if (!username || !password || !email || !otp) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    username = username.trim();
     if (!validator.isEmail(email)) {
         return res.status(400).json({ error: 'Email không hợp lệ' });
     }
-    if (password.trim().length < 8) {
-        return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 8 ký tự' });
+    if (password.length < 8 || password.length > 64) {
+        return res.status(400).json({ error: 'Mật khẩu phải có từ 8 đến 64 ký tự' });
     }
     if (username.length < 3 || username.length > 50) {
         return res.status(400).json({ error: 'Tên tài khoản phải có từ 3 đến 50 ký tự' });
@@ -243,12 +242,12 @@ async function getAccountRank(req, res) {
 async function changePassword(req, res) {
     let AID = req.authorization.AID;
     let oldPassword = req.body.oldPassword;
-    let newPassword = req.body.newPassword;
+    let newPassword = req.body.newPassword?.trim();
     if (!oldPassword || !newPassword) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    if (newPassword.trim().length < 8) {
-        return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 8 ký tự' });
+    if (newPassword.length < 8 || newPassword.length > 64) {
+        return res.status(400).json({ error: 'Mật khẩu phải có từ 8 đến 64 ký tự' });
     }
     try {
         let account = await Account.findOne({
@@ -296,13 +295,13 @@ async function getOTPResetPassword(req, res) {
 
 async function resetPassword(req, res) {
     let email = req.body.email;
-    let newPassword = req.body.newPassword;
+    let newPassword = req.body.newPassword?.trim();
     let otp = req.body.otp;
     if (!email || !newPassword || !otp || !validator.isEmail(email)) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    if (newPassword.trim().length < 8) {
-        return res.status(400).json({ error: 'Mật khẩu phải có ít nhất 8 ký tự' });
+    if (newPassword.length < 8 || newPassword.length > 64) {
+        return res.status(400).json({ error: 'Mật khẩu phải có từ 8 đến 64 ký tự' });
     }
     try {
         let account = await Account.findOne({ where: { Email: email } });

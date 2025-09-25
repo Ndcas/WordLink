@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thêm từ mới</title>
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+</head>
+
+<body>
+    <div class="container">
+        <a href="/admin/toWord" class="btn btn-warning my-5">Trang trước</a>
+        <h1 class="text-center mb-5">Thêm từ mới</h1>
+        <form action="/admin/addWord" method="post" class="container card card-body">
+            <div class="row mb-3 justify-content-center">
+                <label for="wordV" class="col-2 col-form-label">Từ:</label>
+                <div class="col-8">
+                    <input type="text" name="wordV" class="form-control" minlength="1" maxlength="30" required />
+                </div>
+            </div>
+            <div class="row mb-3 justify-content-center">
+                <label for="popularity" class="col-2 col-form-label">Độ phổ biến:</label>
+                <div class="col-8">
+                    <input type="number" name="popularity" class="form-control" value="1" min="1" max="9" step="0.01" required />
+                </div>
+            </div>
+            <% if (status != 0) { %>
+                <div class="mb-3 text-center text-danger"><%= message %></div>
+            <% } %>
+            <button class="btn btn-primary d-flex mx-auto">Thêm từ</button>
+        </form>
+    </div>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,89 @@
+<%- include('../partials/header') %>
+<div class="container">
+    <table id="dataTable" class="table table-striped">
+        <thead>
+            <tr>
+                <th>Tên tài khoản</th>
+                <th>Email</th>
+                <th>Điểm</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% accounts.forEach(account => { %>
+                <tr>
+                    <td><%= account.Username %></td>
+                    <td><%= account.Email %></td>
+                    <td><%= account.Score %></td>
+                    <td><%= account.Status == 1 ? 'Hoạt động' : 'Bị khóa' %></td>
+                    <td>
+                        <a href="/admin/toAccountDetails?id=<%= account.AID %>" class="btn btn-primary">Chi tiết</a>
+                        <% if (account.Status == 1) { %>
+                            <button class="btn btn-danger lockButton" data-id="<%= account.AID %>" data-username="<%= account.Username %>">Khóa</button>
+                        <% } else { %>
+                            <button class="btn btn-success unlockButton" data-id="<%= account.AID %>" data-username="<%= account.Username %>">Mở khóa</button>
+                        <% } %>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+</div>
+<%- include('../partials/footer.ejs') %>
+<script>
+    $(document).ready(function() {
+        $('#dataTable').DataTable({
+            language: {
+                emptyTable: 'Không có tài khoản nào',
+                info: 'Tài khoản _START_ tới _END_ trong _TOTAL_ tài khoản',
+                infoEmpty: 'Không có tài khoản',
+                infoFiltered: '(được lọc từ _MAX_ tài khoản)',
+                lengthMenu: 'Hiện _MENU_ tài khoản mỗi trang',
+                search: 'Tìm kiếm: ',
+                zeroRecords: 'Không có tài khoản phù hợp'
+            },
+            columnDefs: [{
+                orderable: false,
+                targets: [3, 4]
+            }, {
+                searchable: false,
+                targets: [4]
+            }]
+        });
+
+        $(document).on('click', '.lockButton', function() {
+            if (!confirm('Bạn có chắc muốn khóa tài khoản ' + $(this).data('username') + ' không?')) {
+                return;
+            }
+            $.ajax({
+                url: '/admin/lockAccount',
+                method: 'POST',
+                data: { id: $(this).data('id') },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Đã xảy ra lỗi');
+                }
+            });
+        });
+
+        $(document).on('click', '.unlockButton', function() {
+            if (!confirm('Bạn có chắc muốn mở khóa tài khoản ' + $(this).data('username') + ' không?')) {
+                return;
+            }
+            $.ajax({
+                url: '/admin/unlockAccount',
+                method: 'POST',
+                data: { id: $(this).data('id') },
+                success: function() {
+                    location.reload();
+                },
+                error: function() {
+                    alert('Đã xảy ra lỗi');
+                }
+            });
+        });
+    });
+</script>

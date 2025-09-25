@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thông tin tài khoản</title>
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/datatables.min.css">
+    <style>
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<%
+    let avatar = avatarImages.find(image => image.AIID == account.AIID);
+    avatar = avatar ? avatar.Name : 'default.jpg';
+%>
+<body>
+    <div class="container py-5">
+        <a class="btn btn-warning mb-3" href="/admin/toAccount">Trang trước</a>
+        <h1 class="mb-5 text-center">Thông tin tài khoản</h1>
+        <div class="card mb-5">
+            <div class="card-body d-flex align-items-center">
+                <img src="/assets/img/<%= avatar %>" alt="Avatar" class="avatar me-5">
+                <form class="container" action="/admin/editAccount" method="post">
+                    <div class="row mb-3">
+                        <div class="col-2">Email:</div>
+                        <b class="col-10"><%= account.Email %></b>
+                    </div>
+                    <input type="hidden" name="aid" value="<%= account.AID %>" />
+                    <div class="row mb-3">
+                        <label for="username" class="col-2 col-form-label">Tên tài khoản:</label>
+                        <div class="col-10">
+                            <input name="username" type="text" class="form-control" value="<%= account.Username %>" minlength="3" maxlength="50" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="score" class="col-2 col-form-label">Điểm:</label>
+                        <div class="col-10">
+                            <input name="score" type="number" class="form-control" value="<%= account.Score %>" min="0" required />
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label for="status" class="col-2 col-form-label">Trạng thái:</label>
+                        <div class="col-10">
+                            <select name="status" class="form-select">
+                                <option value="1" <%= account.Status == 1 ? 'selected' : '' %>>Hoạt động</option>
+                                <option value="0" <%= account.Status == 0 ? 'selected' : '' %>>Bị khóa</option>
+                            </select>
+                        </div>
+                    </div>
+                    <% if (status != 0) { %>
+                        <div class="mb-3 text-center text-danger"><%= message %></div>
+                    <% } %>
+                    <button class="d-flex mx-auto btn btn-primary" type="submit">Lưu thay đổi</button>
+                </form>
+            </div>
+        </div>
+        <h3 class="text-center mb-5">Lịch sử đấu</h3>
+        <table id="dataTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Đối thủ</th>
+                    <th>Kết quả</th>
+                    <th>Điểm thay đổi</th>
+                    <th>Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% matches.forEach(match => { %>
+                    <tr>
+                        <td><%= match['Player 2'] ? match['Player 2'].Username : 'Bot' %></td>
+                        <td><%= match.Result == 1 ? 'Thắng' : 'Thua' %></td>
+                        <td class="<%= match.ScoreD >= 0 ? 'text-success' : 'text-danger' %>" data-order="<%= match.ScoreD %>"><%= match.ScoreD >= 0 ? `+${match.ScoreD}` : match.ScoreD %></td>
+                        <td data-order="<%= match.MTime.getTime() %>"><%= match.MTime.toLocaleString('vi-VN') %></td>
+                    </tr>
+                <% }); %>
+            </tbody>
+        </table>
+    </div>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/datatables.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('#dataTable').DataTable({
+                language: {
+                    emptyTable: 'Không có trận đấu nào',
+                    info: 'Trận đấu _START_ tới _END_ trong _TOTAL_ trận đấu',
+                    infoEmpty: 'Không có trận đấu',
+                    infoFiltered: '(được lọc từ _MAX_ trận đấu)',
+                    lengthMenu: 'Hiện _MENU_ trận đấu mỗi trang',
+                    search: 'Tìm kiếm: ',
+                    zeroRecords: 'Không có trận đấu phù hợp'
+                },
+                order: [
+                    [3, 'desc']
+                ],
+            });
+        });
+    </script>
+</body>
+
+</html>

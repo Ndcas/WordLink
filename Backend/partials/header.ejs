@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+    <link rel="stylesheet" href="/assets/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/assets/css/datatables.min.css">
+    <style>
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            cursor: pointer;
+        }
+        .dropdown-menu-end {
+            right: 0;
+            left: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <% 
+        let report = (current == "report");
+        let account = (current == "account");
+        let word = (current == "word");
+    %>
+    <nav class="navbar navbar-expand bg-info bg-gradient">
+        <div class="container-fluid">
+            <ul class="navbar-nav mx-auto mb-2">
+                <li class="nav-item mx-5 fw-semibold">
+                    <a href="/admin/toReport" class="nav-link <%= report ? 'active' : '' %>" <%= report ? 'aria-current="page"' : '' %>>Thống kê</a>
+                </li>
+                <li class="nav-item mx-5 fw-semibold">
+                    <a href="/admin/toAccount" class="nav-link <%= account ? 'active' : '' %>" <%= account ? 'aria-current="page"' : '' %>>Quản lý tài khoản</a>
+                </li>
+                <li class="nav-item mx-5 fw-semibold">
+                    <a href="/admin/toWord" class="nav-link <%= word ? 'active' : '' %>" <%= word ? 'aria-current="page"' : '' %>>Quản lý từ ngữ</a>
+                </li>
+            </ul>
+            <div class="d-flex justify-content-end">
+                <div class="dropdown">
+                <img src="/assets/img/default.jpg" alt="Avatar" class="avatar dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="/admin/toChangePass">Đổi mật khẩu</a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="/admin/dangXuat">Đăng xuất</a>
+                    </li>
+                </ul>
+                </div>
+            </div>
+        </div>
+    </nav>

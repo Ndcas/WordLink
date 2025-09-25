@@ -3,7 +3,7 @@ const db = require('../services/database');
 
 const Word = db.define('Word', {
     WordV: {
-        type: DataTypes.STRING,
+        type: DataTypes.STRING(30),
         primaryKey: true
     },
     Popularity: {
