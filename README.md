@@ -1,6 +1,6 @@
 Thư viện hiện có ở Backend: express, ejs, js-sha256, mysql2, dotenv, sequelize, node-cache, nodemailer, jsonwebtoken, validator, socket.io, express-rate-limit, express-slow-down, cookie-parser
 
-Thư viện hiện có ở Frontend: react-navigation, expo-sqlite, socket.io-client, react-native-table-component
+Thư viện hiện có ở Frontend: react-navigation, expo-sqlite, socket.io-client
 
 Lệnh chạy Backend: node index.js
 
