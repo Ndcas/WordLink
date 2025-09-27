@@ -1,6 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-async function checkAndRefreshAccessToken() {
+export default async function checkAndRefreshAccessToken() {
     let token = await AsyncStorage.getItem('accessToken');
     if (!token) {
         throw new Error('Không có access token');
@@ -28,5 +28,3 @@ async function checkAndRefreshAccessToken() {
         }
     }
 }
-
-module.exports = checkAndRefreshAccessToken;

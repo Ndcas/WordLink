@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import checkAndRefreshAccessToken from "../utils/checkAndRefreshAccessToken";
-import { useNavigation } from '@react-navigation/native';
+import getAvatarImage from "../utils/getAvatarImage";
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 export default function AccountInfoScreen() {
   const [account, setAccount] = useState(null);
@@ -11,18 +12,16 @@ export default function AccountInfoScreen() {
   const [analytic, setAnalytic] = useState(null);
   const navigation = useNavigation();
 
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     (async () => {
       try {
-        checkAndRefreshAccessToken();
-
-        const token = await AsyncStorage.getItem("accessToken");
+        setLoading(true);
+        await checkAndRefreshAccessToken();
+        let token = await AsyncStorage.getItem("accessToken");
         if (!token) {
           Alert.alert("Lỗi", "Không tìm thấy access token, vui lòng đăng nhập lại.");
-          setLoading(false);
           return;
         }
-
         let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`, {
           method: "GET",
           headers: {
@@ -30,14 +29,10 @@ export default function AccountInfoScreen() {
             "Content-Type": "application/json",
           },
         });
-
         if (!res.ok) {
           throw new Error("Không lấy được thông tin tài khoản");
         }
-
-        let data = await res.json();
-        setAccount(data);
-
+        setAccount(await res.json());
         res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAnalyticReport`, {
           method: "GET",
           headers: {
@@ -45,24 +40,20 @@ export default function AccountInfoScreen() {
             "Content-Type": "application/json",
           },
         });
-        data = await res.json();
-
         if (!res.ok) {
-          Alert.alert("Lỗi", data.error || "Không tả được dữ liệu")
+          throw new Error("Không lấy được thông tin tài khoản");
         }
         if (res.ok) {
-          setAnalytic(data);
+          setAnalytic(await res.json());
         }
-
-
-      } catch (err) {
-        console.error("Fetch account error:", err);
-        Alert.alert("Lỗi", err.message || "Không thể tải thông tin tài khoản.");
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin tài khoản:", error);
+        Alert.alert("Lỗi", error.message || "Không thể tải thông tin tài khoản.");
       } finally {
         setLoading(false);
       }
     })();
-  }, []);
+  }, []));
 
   //Đăng xuất
   const handleLogout = async () => {
@@ -101,14 +92,11 @@ export default function AccountInfoScreen() {
     );
   }
 
-  let imgUrl = `${process.env.EXPO_PUBLIC_API_URL}/assets/img/${account.AvatarImage ? account.AvatarImage : "default.jpg"}`;
-console.log(imgUrl);
-
   return (
     <ScrollView>
       <View style={styles.container}>
         <Image
-          source={{uri: `${process.env.EXPO_PUBLIC_API_URL}/assets/img/${account.AvatarImage ? account.AvatarImage : "default.jpg"}`}}
+          source={getAvatarImage(account.AvatarImage)}
           style={styles.avatar}
         />
 
