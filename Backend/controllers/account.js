@@ -193,18 +193,17 @@ async function quickLogIn(req, res) {
 async function getAccountInfo(req, res) {
     let AID = req.authorization.AID;
     try {
-        let account = await Account.findOne({ where: { AID: AID } });
-        let avatarImage = null;
-        if (account.AIID) {
-            avatarImage = await AvatarImage.findOne({
-                where: { AIID: account.AIID },
+        let account = await Account.findOne({
+            where: { AID: AID },
+            include: {
+                model: AvatarImage,
                 attributes: ['Name']
-            });
-        }
+            }
+        });
         return res.status(200).json({
             Username: account.Username,
             Email: account.Email,
-            AvatarImage: avatarImage ? avatarImage.Name : null,
+            AvatarImage: account.AvatarImage ? account.AvatarImage.Name : null,
             Score: account.Score
         });
     } catch (error) {
