@@ -620,6 +620,9 @@ async function playWithPlayer(socket) {
 // Hệ thống trả về event invalid match, system error, match result
 function unexpectedDisconnection(socket) {
     socket.on('disconnect', async () => {
+        if(!socket.data.AID){
+            return;
+        }
         let index = queue.findIndex(item => item.data.AID == socket.data.AID);
         if (index != -1) {
             delete queue[index];

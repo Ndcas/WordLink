@@ -17,8 +17,6 @@ const LoginScreen = () => {
 
   useEffect(() => {
     (async () => {
-      console.log((await AsyncStorage.getItem('rememberMe')));
-
       if ((await AsyncStorage.getItem('rememberMe')) == "1") {
         let refreshToken = await AsyncStorage.getItem("refreshToken");
 
@@ -121,7 +119,7 @@ const LoginScreen = () => {
                 </View>
                 <Text style={styles.checkboxText}>Remember me</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => Alert.alert('Quên mật khẩu', 'Chức năng đang phát triển!')}>
+              <TouchableOpacity onPress={() => navigation.navigate("ForgotPasswordScreen")}>
                 <Text style={styles.forgotPassword}>Forgot password?</Text>
               </TouchableOpacity>
             </View>

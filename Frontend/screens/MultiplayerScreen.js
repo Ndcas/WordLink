@@ -25,6 +25,7 @@ export default function MultiplayerScreen({ navigation }) {
   const [currentWord, setCurrentWord] = useState(null);
   const [isMyTurn, setIsMyTurn] = useState(false);
   const [input, setInput] = useState("");
+  const [timer, setTimer] = useState(30); // đếm ngược
 
   useEffect(() => {
     const init = async () => {
@@ -41,42 +42,14 @@ export default function MultiplayerScreen({ navigation }) {
       socket.on("connect", () => {
         setStatus("Đã kết nối");
         socket.emit("authentication", refreshToken, avatarImage);
-        // Vào multiplayer ngay
-
       });
 
       socket.on("authentication failed", () => {
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'LoginScreen',
-            },
-          ],
-        });
+        navigation.reset({ index: 0, routes: [{ name: "LoginScreen" }] });
       });
 
       socket.on("authenticated", () => {
         socket.emit("find match");
-      });
-
-      socket.on("invalid operation", () => {
-        Alert.alert("operation failed");
-      });
-
-      socket.on("invalid match", () => {
-        Alert.alert("invalid match");
-      });
-
-      socket.on("system error", () => {
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'Home',
-            },
-          ],
-        });
       });
 
       socket.on("waiting for a match", () => {
@@ -96,13 +69,14 @@ export default function MultiplayerScreen({ navigation }) {
         setCurrentWord(data?.currentWord || null);
         setUsedWords(data?.usedWords || []);
         setStatus("Lượt của bạn");
+        setTimer(30); // reset timer mỗi lượt
       });
 
-      newSocket.on("invalid word", () => {
+      socket.on("invalid word", () => {
         Alert.alert("❌ Lỗi", "Từ không hợp lệ!");
       });
 
-      newSocket.on("valid word", (data) => {
+      socket.on("valid word", (data) => {
         setCurrentWord(data?.currentWord);
         setUsedWords(data?.usedWords || []);
       });
@@ -110,16 +84,9 @@ export default function MultiplayerScreen({ navigation }) {
       socket.on("match result", (data) => {
         setInMatch(false);
         setIsMyTurn(false);
-        const txt = data.result == 1 ? "Bạn thắng" : "Bạn thua";
+        const txt = data.result == 1 ? "Bạn thắng 🎉" : "Bạn thua 😢";
         Alert.alert("Kết quả", `${txt}\nScore: ${data?.scoreD ?? "-"}`);
-        navigation.reset({
-          index: 0,
-          routes: [
-            {
-              name: 'Home',
-            },
-          ],
-        });
+        navigation.reset({ index: 0, routes: [{ name: "Home" }] });
       });
 
       socket.connect();
@@ -132,12 +99,28 @@ export default function MultiplayerScreen({ navigation }) {
     };
   }, []);
 
+  // Timer countdown effect
+  useEffect(() => {
+    let interval;
+    if (isMyTurn && timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    } else if (timer === 0 && isMyTurn) {
+      Alert.alert("⏰ Hết giờ!", "Bạn đã bỏ lỡ lượt.");
+      setIsMyTurn(false);
+      if (socketRef.current) socketRef.current.emit("bot win"); // hoặc emit pass turn
+    }
+    return () => clearInterval(interval);
+  }, [isMyTurn, timer]);
+
   const sendWord = () => {
     if (!input.trim()) return;
+    if (!currentWord) {
+      Alert.alert("Lỗi", "Chưa có từ bắt đầu!");
+      return;
+    }
     let sendWord = input.trim().toLowerCase();
-    setCurrentWord(sendWord);
-    if (sendWord[0] != currentWord[currentWord.length - 1]) {
-      Alert.alert("Từ không hợp lệ");
+    if (sendWord[0] !== currentWord[currentWord.length - 1]) {
+      Alert.alert("Từ không hợp lệ", "Chữ cái đầu phải khớp với chữ cuối của từ trước!");
       return;
     }
     if (socketRef.current) {
@@ -157,6 +140,7 @@ export default function MultiplayerScreen({ navigation }) {
         <View style={{ flex: 1, width: "100%" }}>
           <Text style={styles.opponent}>Đối thủ: {opponent?.username}</Text>
           <Text style={styles.current}>Từ hiện tại: {currentWord || "—"}</Text>
+          {isMyTurn && <Text style={styles.timer}>⏳ {timer}s</Text>}
 
           <ScrollView style={styles.wordList}>
             {usedWords.map((w, i) => (
@@ -199,6 +183,13 @@ const styles = StyleSheet.create({
   },
   opponent: { fontSize: 16, marginTop: 10, color: "#EB8317" },
   current: { fontSize: 20, marginTop: 20, color: "#10375C", fontWeight: "700" },
+  timer: {
+    fontSize: 18,
+    color: "#C62828",
+    fontWeight: "bold",
+    textAlign: "center",
+    marginVertical: 10,
+  },
   wordList: { flex: 1, marginVertical: 10 },
   word: { fontSize: 16, paddingVertical: 4, color: "#333" },
   inputRow: { flexDirection: "row", alignItems: "center" },

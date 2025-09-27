@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView } from "react-native";
+import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import checkAndRefreshAccessToken from "../utils/checkAndRefreshAccessToken";
 import { useNavigation } from '@react-navigation/native';
 
 export default function AccountInfoScreen() {
   const [account, setAccount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [analytic, setAnalytic] = useState(null);
   const navigation = useNavigation();
 
   useEffect(() => {
-    const fetchAccountInfo = async () => {
+    (async () => {
       try {
+        checkAndRefreshAccessToken();
+
         const token = await AsyncStorage.getItem("accessToken");
         if (!token) {
           Alert.alert("Lỗi", "Không tìm thấy access token, vui lòng đăng nhập lại.");
@@ -18,7 +23,7 @@ export default function AccountInfoScreen() {
           return;
         }
 
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`, {
+        let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`, {
           method: "GET",
           headers: {
             Authorization: `Bearer ${token}`,
@@ -30,17 +35,33 @@ export default function AccountInfoScreen() {
           throw new Error("Không lấy được thông tin tài khoản");
         }
 
-        const data = await res.json();
+        let data = await res.json();
         setAccount(data);
+
+        res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAnalyticReport`, {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        });
+        data = await res.json();
+
+        if (!res.ok) {
+          Alert.alert("Lỗi", data.error || "Không tả được dữ liệu")
+        }
+        if (res.ok) {
+          setAnalytic(data);
+        }
+
+
       } catch (err) {
         console.error("Fetch account error:", err);
         Alert.alert("Lỗi", err.message || "Không thể tải thông tin tài khoản.");
       } finally {
         setLoading(false);
       }
-    };
-
-    fetchAccountInfo();
+    })();
   }, []);
 
   //Đăng xuất
@@ -80,25 +101,72 @@ export default function AccountInfoScreen() {
     );
   }
 
+  let imgUrl = `${process.env.EXPO_PUBLIC_API_URL}/assets/img/${account.AvatarImage ? account.AvatarImage : "default.jpg"}`;
+console.log(imgUrl);
+
   return (
-    <View style={styles.container}>
-      {account.AvatarImage ? (
+    <ScrollView>
+      <View style={styles.container}>
         <Image
-          source={{ uri: `${process.env.EXPO_PUBLIC_API_URL}/uploads/${account.AvatarImage}` }}
+          source={{uri: `${process.env.EXPO_PUBLIC_API_URL}/assets/img/${account.AvatarImage ? account.AvatarImage : "default.jpg"}`}}
           style={styles.avatar}
         />
-      ) : (
-        <View style={[styles.avatar, styles.placeholder]} />
-      )}
 
-      <Text style={styles.username}>👤 {account.Username}</Text>
-      <Text style={styles.info}>📧 {account.Email}</Text>
-      <Text style={styles.info}>⭐ Điểm: {account.Score}</Text>
+        <Text style={styles.username}>👤 {account.Username}</Text>
+        <Text style={styles.info}>📧 {account.Email}</Text>
+        <Text style={styles.info}>⭐ Điểm: {account.Score}</Text>
 
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutText}>LOG OUT</Text>
-      </TouchableOpacity>
-    </View>
+        <View style={{ width: "80%" }}>
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận dã chơi:
+            <Text style={{ fontWeight: "normal" }}> {analytic.numOfMatchesPlayed}</Text>
+          </Text>
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận thắng:
+            <Text style={{ fontWeight: "normal" }}> {analytic.pvpWin}</Text>
+          </Text>
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận thua:
+            <Text style={{ fontWeight: "normal" }}> {analytic.pvpLose}</Text>
+          </Text>
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Số từ đã dùng:
+            <Text style={{ fontWeight: "normal" }}> {analytic.numOfWordsUsed}</Text>
+          </Text>
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Trung bình độ phổ biến:
+            <Text style={{ fontWeight: "normal" }}> {analytic.avgPopularity}</Text>
+          </Text>
+
+          <Text style={[styles.info, { marginTop: 10, alignSelf: "center", fontWeight: "bold" }]}>100 từ gần đây</Text>
+          <View style={{ flexDirection: 'column' }}>
+            <View style={{ flex: 1, flexDirection: 'row' }}>
+              <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#f7de83ff" }}>
+                <Text style={{ marginLeft: "15%", fontWeight: "bold" }}>Từ vựng</Text>
+              </View>
+              <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end", backgroundColor: "#f7de83ff" }}>
+                <Text style={{ marginRight: "15%", fontWeight: "bold" }}>Số lần</Text>
+              </View>
+            </View>
+            {
+              Object.entries(analytic.last100countMap).map(([word, count], index) => (
+                <View key={index} style={{ flex: 1, flexDirection: 'row' }}>
+                  <View style={{ flex: 1, justifyContent: "center", backgroundColor: index % 2 == 0 ? "#fff" : "#f7de83ff" }}>
+                    <Text style={{ marginLeft: "15%" }}>{word}</Text>
+                  </View>
+                  <View style={{ flex: 1, justifyContent: "center", alignItems: 'flex-end', backgroundColor: index % 2 == 0 ? "#fff" : "#f7de83ff" }}>
+                    <Text style={{ marginRight: "15%" }}>{count}</Text>
+                  </View>
+                </View>
+              ))
+            }
+
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.changePasswordButton} onPress={() => navigation.navigate("ChangePasswordScreen")}>
+          <Text style={styles.logoutText}>Change Password</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>LOG OUT</Text>
+        </TouchableOpacity>
+      </View>
+    </ScrollView>
   );
 }
 
@@ -106,7 +174,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
     backgroundColor: "#fff",
     padding: 20,
   },
@@ -120,6 +187,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     marginBottom: 20,
+    marginTop: "20%",
   },
   placeholder: {
     backgroundColor: "#ccc",
@@ -133,9 +201,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 6,
   },
+  analytic: {
+    backgroundColor: "#ffffffff",
+  },
   logoutButton: {
     marginTop: 30,
     backgroundColor: '#FF4D4F',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center'
+  },
+  changePasswordButton: {
+    marginTop: 30,
+    backgroundColor: '#F3C623',
     padding: 15,
     borderRadius: 10,
     alignItems: 'center'
