@@ -5,11 +5,10 @@ const cacheClient = require('../services/cache');
 const { Op } = require('sequelize');
 
 async function getWordSuggestions(req, res) {
-    let qWord = req.query.qWord;
-    if (!qWord || qWord.trim() == '') {
+    let qWord = req.query.qWord?.trim();
+    if (!qWord || qWord.length == 0) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    qWord = qWord.trim();
     try {
         let result = await Word.findAll({
             attributes: ['WordV'],
@@ -28,11 +27,10 @@ async function getWordSuggestions(req, res) {
 }
 
 async function getWordInformation(req, res) {
-    let word = req.query.word;
-    if (!word || word.trim() == '') {
+    let word = req.query.word?.toLowerCase().trim();
+    if (!word || word.length == 0) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    word = word.toLowerCase().trim();
     let cachedData = cacheClient.get(`wordInformation:${word}`);
     if (cachedData) {
         return res.status(200).json(cachedData);
@@ -56,19 +54,10 @@ async function getWordInformation(req, res) {
             },
             raw: true
         });
-        let uniqueMeanings = [];
-        let seen = new Set();
-        for (let m of meanings) {
-            const key = (m.Definition || "") + "-" + (m["PartOfSpeech.POSName"] || "");
-            if (!seen.has(key)) {
-                seen.add(key);
-                uniqueMeanings.push(m);
-            }
-        }
         let result = {
             word: word,
             popularity: popularity.Popularity,
-            meanings: uniqueMeanings,
+            meanings: meanings,
         }
         cacheClient.set(`wordInformation:${word}`, result);
         return res.status(200).json(result);

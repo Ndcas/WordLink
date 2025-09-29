@@ -14,4 +14,8 @@ router.post('/newBookmark', verifyAccessToken, controller.newBookmark);
 // Cần access token trong header Authorization: 'Bearer [access token]', word (WordV) trong body
 router.post('/deleteBookmark', verifyAccessToken, controller.deleteBookmark);
 
+// Cần access token trong header Authorization: 'Bearer [access token]', word (WordV) trong body
+// => isBookmarked (true/false)
+router.post('/isBookmarked', verifyAccessToken, controller.isBookmarked);
+
 module.exports = router;
