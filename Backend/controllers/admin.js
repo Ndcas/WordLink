@@ -12,9 +12,10 @@ const cache = require('../services/cache');
 const sendEmail = require('../services/mail');
 const { Op } = require('sequelize');
 const db = require('../services/database');
+const validator = require('validator');
 
 function toIndex(req, res) {
-    let status = parseInt(req.query.status, 10) ?? 0;
+    let status = parseInt(req.query.status, 10) || 0;
     let message = '';
     switch (status) {
         case -1:
@@ -47,7 +48,7 @@ function verify(req, res, next) {
 
 async function dangNhap(req, res) {
     let email = req.body.email?.trim();
-    let password = req.body.password?.trim();
+    let password = req.body.password;
     if (!email || !password) {
         return res.redirect('/admin?status=-1');
     }
@@ -377,8 +378,8 @@ async function toWordDetails(req, res) {
 }
 
 async function editWord(req, res) {
-    let wordV = req.body.wordV;
-    let popularity = req.body.popularity;
+    let wordV = req.body.wordV?.trim();
+    let popularity = parseFloat(req.body.popularity);
     if (!wordV || !popularity) {
         return res.redirect(`/admin/toWordDetails?id=${wordV}&statusW=-1`);
     }
@@ -400,9 +401,9 @@ async function editWord(req, res) {
 }
 
 async function addMeaning(req, res) {
-    let wordV = req.body.wordV;
+    let wordV = req.body.wordV?.trim();
     let pos = req.body.pos;
-    let phonetic = req.body.phonetic?.trim() || null;;
+    let phonetic = req.body.phonetic?.trim() || null;
     let definition = req.body.definition?.trim();
     let example = req.body.example?.trim() || null;
     if (!wordV || !pos || !definition) {
@@ -566,8 +567,8 @@ function toChangePass(req, res) {
 
 async function changePass(req, res) {
     let email = req.authorization.email;
-    let oldPass = req.body.oldPass?.trim();
-    let newpass = req.body.newPass?.trim();
+    let oldPass = req.body.oldPass;
+    let newpass = req.body.newPass;
     if (!oldPass || !newpass || newpass.length < 8 || newpass.length > 64) {
         return res.redirect('/admin/toChangePass?status=-1');
     }
@@ -625,8 +626,8 @@ function toResetPass(req, res) {
 }
 
 async function sendOTP(req, res) {
-    let email = req.body.email?.trim();
-    if (!email) {
+    let email = req.body.email;
+    if (!email || !validator.isEmail(email)) {
         return res.status(400).json({ message: 'Thiếu email' });
     }
     let admin = await Admin.findByPk(email);
@@ -647,9 +648,9 @@ async function sendOTP(req, res) {
 }
 
 async function resetPass(req, res) {
-    let email = req.body.email?.trim();
+    let email = req.body.email;
     let otp = req.body.otp;
-    if (!email) {
+    if (!email || !otp || !validator.isEmail(email)) {
         return res.redirect('/admin/toResetPass?status=-1');
     }
     let admin = await Admin.findByPk(email);

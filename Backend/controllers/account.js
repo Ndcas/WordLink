@@ -81,7 +81,7 @@ function refreshAccessToken(req, res) {
 
 async function signUp(req, res) {
     let username = req.body.username?.trim();
-    let password = req.body.password?.trim();
+    let password = req.body.password;
     let email = req.body.email?.trim();
     let otp = req.body.otp;
     if (!username || !password || !email || !otp) {
@@ -297,7 +297,7 @@ async function getOTPResetPassword(req, res) {
 
 async function resetPassword(req, res) {
     let email = req.body.email;
-    let newPassword = req.body.newPassword?.trim();
+    let newPassword = req.body.newPassword;
     let otp = req.body.otp;
     if (!email || !newPassword || !otp || !validator.isEmail(email)) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
@@ -326,13 +326,12 @@ async function resetPassword(req, res) {
 
 async function changeUsernameAndAvatarImage(req, res) {
     let AID = req.authorization.AID;
-    let username = req.body.username;
+    let username = req.body.username?.trim();
     let avatarName = req.body.avatarName;
     if (!username && !avatarName) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     if (username) {
-        username = username.trim();
         if (username.length < 3 || username.length > 50) {
             return res.status(400).json({ error: 'Tên tài khoản phải có từ 3 đến 50 ký tự' });
         }

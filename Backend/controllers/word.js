@@ -6,7 +6,7 @@ const { Op } = require('sequelize');
 
 async function getWordSuggestions(req, res) {
     let qWord = req.query.qWord?.trim();
-    if (!qWord || qWord.length == 0) {
+    if (!qWord) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
@@ -28,7 +28,7 @@ async function getWordSuggestions(req, res) {
 
 async function getWordInformation(req, res) {
     let word = req.query.word?.toLowerCase().trim();
-    if (!word || word.length == 0) {
+    if (!word) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     let cachedData = cacheClient.get(`wordInformation:${word}`);

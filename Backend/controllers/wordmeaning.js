@@ -3,13 +3,11 @@ const cacheClient = require('../services/cache');
 const googleAPI = require('../services/googleapi');
 
 async function getPronunciation(req, res) {
-    let word = req.query.word;
-    let ipa = req.query.ipa;
-    if (!word || word.trim() == '' || !ipa || ipa.trim() == '') {
+    let word = req.query.word?.toLowerCase().trim();
+    let ipa = req.query.ipa?.trim();
+    if (!word || !ipa) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    word = word.toLowerCase().trim();
-    ipa = ipa.trim();
     let result = cacheClient.get(`pronunciation:${word}:${ipa}`);
     if (result) {
         return res.status(200).json({
@@ -42,13 +40,11 @@ async function getPronunciation(req, res) {
 }
 
 async function explainPronunciation(req, res) {
-    let word = req.query.word;
-    let ipa = req.query.ipa;
-    if (!word || word.trim() == '' || !ipa || ipa.trim() == '') {
+    let word = req.query.word?.toLowerCase().trim();
+    let ipa = req.query.ipa?.trim();
+    if (!word || !ipa) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
-    word = word.toLowerCase().trim();
-    ipa = ipa.trim();
     let result = cacheClient.get(`explainedPronunciation:${word}:${ipa}`);
     if (result) {
         return res.status(200).json({

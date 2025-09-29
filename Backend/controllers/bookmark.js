@@ -17,7 +17,7 @@ async function getBookmarks(req, res) {
 async function newBookmark(req, res) {
     let AID = req.authorization.AID;
     let word = req.body.word?.trim();
-    if (!word || word.length == 0) {
+    if (!word) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
@@ -35,7 +35,7 @@ async function newBookmark(req, res) {
 async function deleteBookmark(req, res) {
     let AID = req.authorization.AID;
     let word = req.body.word?.trim();
-    if (!word || word.length == 0) {
+    if (!word) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
@@ -60,7 +60,7 @@ async function deleteBookmark(req, res) {
 async function isBookmarked(req, res) {
     let AID = req.authorization.AID;
     let word = req.body.word?.trim();
-    if (!word || word.length == 0) {
+    if (!word) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
