@@ -149,6 +149,9 @@ export default function AccountInfoScreen() {
           </View>
         </View>
 
+        <TouchableOpacity style={styles.changePasswordButton} onPress={() => navigation.navigate("BookmarkScreen")}>
+          <Text style={styles.logoutText}>Bookmark</Text>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.changePasswordButton} onPress={() => navigation.navigate("ChangePasswordScreen")}>
           <Text style={styles.logoutText}>Change Password</Text>
         </TouchableOpacity>

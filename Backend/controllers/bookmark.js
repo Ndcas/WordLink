@@ -21,6 +21,15 @@ async function newBookmark(req, res) {
         return res.status(400).json({ error: 'Thiếu thông tin đầu vào' });
     }
     try {
+        let bookmark = await Bookmark.findOne({
+            where: {
+                AID: AID,
+                WordV: word
+            }
+        });
+        if (bookmark) {
+            return res.status(409).json({ error: 'Bookmark đã tồn tại' });
+        }
         await Bookmark.create({
             AID: AID,
             WordV: word

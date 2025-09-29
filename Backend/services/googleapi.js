@@ -29,7 +29,7 @@ async function explainPronunciation(ipa, word) {
     let body = {
         contents: [{
             parts: [{
-                text: `Hãy giải thích ngắn gọn cách phát âm ${ipa} của từ ${word} trong tiếng Anh`
+                text: `Hãy giải thích ngắn gọn cách phát âm ${ipa} của từ ${word} trong tiếng Anh bằng tiếng Anh`
             }]
         }]
     }

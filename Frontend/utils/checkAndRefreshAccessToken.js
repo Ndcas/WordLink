@@ -12,13 +12,18 @@ export default async function checkAndRefreshAccessToken() {
             throw new Error('Không có refresh token');
         }
         let apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/refreshAccessToken`;
-        let response = await fetch(apiUrl, {
+        let response = null;
+        try {
+            response = await fetch(apiUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 Authorization: `Bearer ${refreshToken}`
             }
         });
+        } catch (error) {
+            throw new Error('Làm mới access token thất bại');
+        }
         if (response.ok) {
             let data = await response.json();
             await AsyncStorage.setItem('accessToken', data.accessToken);

@@ -1,29 +1,41 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, FlatList, SafeAreaView, ActivityIndicator } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, FlatList, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { Audio } from "expo-av";
+import { get, post } from '../utils/requestWrapper';
+import { deletLogiInformation } from "../utils/deleteLoginInformation";
 
-const Dictionary = () => {
+const Dictionary = ({ route }) => {
     const [searchQuery, setSearchQuery] = useState('');
     const [suggestions, setSuggestions] = useState([]);
     const [loading, setLoading] = useState(false);
     const [wordDetail, setWordDetail] = useState(null); // State để lưu thông tin chi tiết của từ
-    const [pronunciation, setPronunciation] = useState(null);
-    const [explanation, setExplanation] = useState(null);
-
-    //Load lại dữ liệu
-    useFocusEffect(
-        useCallback(() => {
-            console.log('DictionaryScreen được focus, load lại dữ liệu');
-        }, [])
-    );
+    const [pronunciation, setPronunciation] = useState([]);
+    const [isBookmarked, setIsBookmarked] = useState(false);
 
     const navigation = useNavigation();
     const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
     // Dùng useRef để lưu timer ID cho debounce, tránh re-render
     const debounceTimerRef = useRef(null);
+
+    useFocusEffect(useCallback(() => {
+        if (route.params && route.params.word) {
+            setSuggestions([]);
+            setSearchQuery(route.params.word);
+            getWordInformation(route.params.word);
+            route.params.word = null; // Clear param after using it
+        }
+        else {
+            setSuggestions([]);
+            setSearchQuery("");
+            setWordDetail(null);
+            setPronunciation([]);
+            setIsBookmarked(false);
+
+        }
+    }, []));
 
     // Hàm gọi API lấy gợi ý từ, đã được cải tiến
     const getWordSuggestions = useCallback(async (query) => {
@@ -61,55 +73,160 @@ const Dictionary = () => {
     // Hàm gọi API lấy thông tin chi tiết của từ
     const getWordInformation = async (word) => {
         try {
-            const res = await fetch(`${API_URL}/word/getWordInformation?word=${encodeURIComponent(word)}`);
-            if (res.ok) {
-                const data = await res.json();
-
-                // Nếu có Phonetic trong meanings thì gọi thêm 2 API
-                if (data.meanings && data.meanings.length > 0 && data.meanings[0].Phonetic) {
-                    const ipa = data.meanings[0].Phonetic;
-
-                    // gọi song song 2 API
-                    const [pronRes, explRes] = await Promise.all([
-                        fetch(`${API_URL}/wordmeaning/getPronunciation?word=${encodeURIComponent(word)}&ipa=${encodeURIComponent(ipa)}`),
-                        fetch(`${API_URL}/wordmeaning/explainPronunciation?word=${encodeURIComponent(word)}&ipa=${encodeURIComponent(ipa)}`)
-                    ]);
-
-                    if (pronRes.ok) {
-                        const pronData = await pronRes.json();
-                        data.pronunciation = pronData; // gắn trực tiếp vào object
-                    }
-
-                    if (explRes.ok) {
-                        const explData = await explRes.json();
-                        data.explanation = explData.explanation; // gắn trực tiếp vào object
-                    }
-                }
-
-                setWordDetail(data);
-                setSuggestions([]);
-            } else {
-                console.error('Lỗi server:', res.status);
-                setWordDetail(null);
+            let res = await fetch(`${API_URL}/word/getWordInformation?word=${encodeURIComponent(word)}`);
+            if (res.status == 429) {
+                Alert.alert("Error", "Too many requests, please wait and try again.");
+                return;
             }
+            if (!res.ok) {
+                Alert.alert("Error", "Server error, please try again.");
+                return;
+            }
+            const data = await res.json();
+
+            let pronunciationTemp = [];
+            data.meanings.forEach(meaning => {
+                if (pronunciationTemp.indexOf(meaning.Phonetic) == -1) {
+                    pronunciationTemp.push(meaning.Phonetic);
+                }
+            });
+            setPronunciation(pronunciationTemp);
+
+            setWordDetail(data);
+            setSuggestions([]);
+
+            res = await post("/bookmark/isBookmarked", { word: word }, 'access');
+            if (!res.ok) {
+                Alert.alert("Error", "Server error, please try again.");
+                return;
+            }
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Bad request");
+                    return;
+                case 401:
+                    Alert.alert("Error", "Unauthorized, please log in again.");
+                    await deletLogiInformation();
+                    navigation.dispatch(
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [
+                                { name: 'LoginScreen' },
+                            ],
+                        })
+                    );
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+
+            const isBookmarkedTemp = await res.json();
+            setIsBookmarked(isBookmarkedTemp.bookmarked);
         } catch (err) {
             console.error('Fetch lỗi:', err);
             setWordDetail(null);
         }
     };
 
-    // Hàm phát âm thanh từ base64
-    async function playPronunciation(base64Audio) {
+    async function pronounce(ipa) {
         try {
+            const pronRes = await get("/wordmeaning/getPronunciation", { word: wordDetail.word, ipa: ipa });
+            switch (pronRes.status) {
+                case 404:
+                    Alert.alert("Error", "Pronunciation not found");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+            if (!pronRes.ok) {
+                Alert.alert("Error", "Server error, please try again.");
+                return;
+            }
+
+            const pronData = await pronRes.json();
+
             const sound = new Audio.Sound();
-            const uri = `data:audio/mp3;base64,${base64Audio}`;
+            const uri = `data:audio/mp3;base64,${pronData.pronunciation}`;
             await sound.loadAsync({ uri });
             await sound.playAsync();
-        } catch (err) {
-            console.error("Lỗi phát âm thanh:", err);
+        } catch (error) {
+            Alert.alert("Error", "Cannot connect to server.");
         }
     }
 
+    async function getExplaination(ipa) {
+        try {
+            const expRes = await get("/wordmeaning/explainPronunciation", { word: wordDetail.word, ipa: ipa });
+            switch (expRes.status) {
+                case 404:
+                    Alert.alert("Error", "Explain not found");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+            if (!expRes.ok) {
+                Alert.alert("Error", "Server error, please try again.");
+                return;
+            }
+
+            const expData = await expRes.json();
+            Alert.alert("Explanation", expData.explanation.replaceAll("**", ""));
+        } catch (error) {
+            Alert.alert("Error", "Cannot connect to server.");
+        }
+    }
+
+    async function handleBookmark() {
+        try {
+            let res = await post("/bookmark/" + (isBookmarked ? "deleteBookmark" : "newBookmark"), { word: wordDetail.word }, 'access');
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Bad request");
+                    return;
+                case 401:
+                    Alert.alert("Error", "Unauthorized, please log in again.");
+                    await deletLogiInformation();
+                    navigation.dispatch(
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [
+                                { name: 'LoginScreen' },
+                            ],
+                        })
+                    );
+                    return;
+                case 404:
+                    Alert.alert("Error", "Bookmark not found");
+                    return;
+                case 409:
+                    Alert.alert("Error", "Bookmark existed");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+            setIsBookmarked(!isBookmarked);
+
+        } catch (error) {
+            Alert.alert("Error", "Cannot connect to server.");
+            return;
+        }
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -168,49 +285,58 @@ const Dictionary = () => {
             {wordDetail && (
                 <ScrollView style={styles.detailContainer}>
                     <Text style={styles.detailTitle}>{wordDetail.word}</Text>
-                    <Text style={{ fontFamily: 'Bungee' }}>Popularity: {wordDetail.popularity}</Text>
-
-                    {wordDetail.pronunciation && (
-                        <View style={styles.pronunciationBox}>
-                            <Text style={styles.sectionTitle}>Pronunciation</Text>
-                            <Text style={styles.IPAStyle}>IPA: {wordDetail.pronunciation.ipa}</Text>
-                            {/* Nút play thay cho việc hiển thị base64 */}
-                            <TouchableOpacity
-                                style={styles.playButton}
-                                onPress={() =>
-                                    playPronunciation(wordDetail.pronunciation.pronunciation)
-                                }
-                            >
-                                <Text style={styles.playButtonText}>🔊 Pronounce</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        <Text style={{ fontFamily: 'Bungee', flex: 1 }}>Popularity: {wordDetail.popularity}</Text>
+                        <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                            <TouchableOpacity onPress={handleBookmark}>
+                                {isBookmarked ? (
+                                    <Ionicons name="bookmark" size={40} color="#F3C623" style={{ marginRight: 3 }} />
+                                ) : (
+                                    <Ionicons name="bookmark-outline" size={40} color="#F3C623" style={{ marginRight: 3 }} />
+                                )}
                             </TouchableOpacity>
                         </View>
-                    )}
+                    </View>
 
-                    {wordDetail.explanation && (
-                        <View style={styles.explanationBox}>
-                            <Text style={styles.sectionTitle}>Explanation</Text>
-                            <Text style={styles.sectionText}>{wordDetail.explanation}</Text>
-                        </View>
-                    )}
+                    <View style={styles.pronunciationBox}>
+                        <Text style={styles.sectionTitle}>Pronunciation</Text>
+                        {
+                            pronunciation.map((item, index) => (
+                                <View key={index} style={{ marginBottom: 10, borderBottomWidth: 1, borderBottomColor: '#ccc', paddingBottom: 10, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', columnGap: 10 }}>
+                                    <View style={{ flex: 3 }}>
+                                        <Text style={styles.IPAStyle}>{item}</Text>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <TouchableOpacity style={styles.playButton} onPress={() => pronounce(item)}>
+                                            <Text style={styles.playButtonText}>🔊</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                    <View style={{ flex: 1 }}>
+                                        <TouchableOpacity style={styles.playButton} onPress={() => getExplaination(item)}>
+                                            <Text style={styles.playButtonText}>?</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ))
+                        }
+                    </View>
 
                     {wordDetail.meanings && wordDetail.meanings.map((meaning, index) => (
                         <View key={index} style={styles.meaningItem}>
-                            <Text style={styles.posText}>
-                                {meaning["PartOfSpeech.POSName"] || "Unknown"}
-                            </Text>
+                            <View style={{ flexDirection: "row", alignItems: 'center', columnGap: 10 }}>
+                                <Text style={[styles.posText, { flex: 1 }]}>
+                                    {meaning["PartOfSpeech.POSName"] || "Unknown"}
+                                </Text>
+                                <Text style={{ flex: 1, justifyContent: "flex-end", textAlign: "right", fontSize: 16 }}>{meaning.Phonetic}</Text>
+                            </View>
                             <Text style={styles.meaningText}>{meaning.Definition || "No meaning available"}</Text>
+                            <Text style={[styles.meaningText, { fontWeight: "bold", fontSize: 13 }]}>{meaning.Example || "No example available"}</Text>
                         </View>
                     ))}
-
-                    {/* {wordDetail.meanings.map((meaning, index) => (
-                        <View key={index} style={styles.meaningItem}>
-                            <Text style={styles.posText}>{meaning["PartOfSpeech.POSName"]}</Text>
-                            <Text style={{fontFamily:"Bungee",color:'Black'}}>{meaning.Meaning}</Text>
-                        </View>
-                    ))} */}
                 </ScrollView>
-            )}
-        </SafeAreaView>
+            )
+            }
+        </SafeAreaView >
     );
 };
 
@@ -333,8 +459,8 @@ const styles = StyleSheet.create({
         fontFamily: 'Bungee',
     },
     IPAStyle: {
-        fontSize: 13,
-        fontFamily: 'Bungee'
+        fontSize: 18,
+        fontWeight: "bold"
     },
     pronunciationBox: {
         marginTop: 12,

@@ -16,6 +16,7 @@ import PlayWithBotScreen from './screens/PlayWithBotScreen';
 import MultiplayerScreen from './screens/MultiplayerScreen';
 import ForgotPasswordScreen from './screens/ForgotPasswordScreen';
 import ChangePasswordScreen from './screens/ChangePasswordScreen';
+import BookmarkScreen from './screens/BookmarkScreen';
 
 
 const Stack = createNativeStackNavigator();
@@ -80,6 +81,7 @@ export default function App() {
         <Stack.Screen name="MultiplayerScreen" component={MultiplayerScreen} />
         <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
         <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} />
+        <Stack.Screen name="BookmarkScreen" component={BookmarkScreen} />
 
         {/* Main App (có Tab Navigator) */}
         <Stack.Screen name="MainTabs" component={MainTabs} />
