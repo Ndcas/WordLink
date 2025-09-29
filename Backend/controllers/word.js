@@ -67,4 +67,4 @@ async function getWordInformation(req, res) {
     }
 }
 
-module.exports = { getWordSuggestions, getWordInformation }
+module.exports = { getWordSuggestions, getWordInformation };

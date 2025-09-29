@@ -31,7 +31,7 @@ const avatarMap = {
     'avatar-cute-24.webp': avatar24,
     'avatar-cute-25.webp': avatar25,
     'avatar-cute-31.webp': avatar31,
-}
+};
 
 export default function getAvatarImage(filename) {
     return avatarMap[filename] || defaultAvatar;

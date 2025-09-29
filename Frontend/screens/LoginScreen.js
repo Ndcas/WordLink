@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { post } from '../utils/requestWrapper';
 
 const { width } = Dimensions.get('window');
 
@@ -18,27 +19,29 @@ const LoginScreen = () => {
   useEffect(() => {
     (async () => {
       if ((await AsyncStorage.getItem('rememberMe')) == "1") {
-        let refreshToken = await AsyncStorage.getItem("refreshToken");
+        // let refreshToken = await AsyncStorage.getItem("refreshToken");
 
-        let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/quickLogIn`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-            "Content-Type": "application/json"
-          },
-        });
-        if (res.ok) {
-          let data = await res.json();
-          await AsyncStorage.setItem('accessToken', data.accessToken);
-          await AsyncStorage.setItem('refreshToken', data.refreshToken);
-          global.expireMs = data.expireMs + Date.now();
-
-          navigation.replace('MainTabs');
+        // let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/quickLogIn`, {
+        //   method: "POST",
+        //   headers: {
+        //     Authorization: `Bearer ${refreshToken}`,
+        //     "Content-Type": "application/json"
+        //   },
+        // });
+        try {
+          let res = await post('/account/quickLogIn', {}, 'refresh');
+          if (res.ok) {
+            let data = await res.json();
+            await AsyncStorage.setItem('accessToken', data.accessToken);
+            await AsyncStorage.setItem('refreshToken', data.refreshToken);
+            global.expireMs = data.expireMs + Date.now();
+            navigation.replace('MainTabs');
+          }
+        } catch (error) {
+          console.error('Quick login error:', error);
         }
-
       }
     })();
-
   }, []);
 
   const handleLogin = async () => {
@@ -49,29 +52,31 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/logIn`; // đúng với backend
-      const res = await axios.post(apiUrl, {
+      // const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/logIn`; // đúng với backend
+      // const res = await axios.post(apiUrl, {
+      //   email: email.trim(),       // backend yêu cầu "Email"
+      //   password: password.trim() // backend yêu cầu "APassword"
+      // });
+      let response = await post('/account/logIn', {
         email: email.trim(),       // backend yêu cầu "Email"
         password: password.trim() // backend yêu cầu "APassword"
       });
-
-      if (res.data?.accessToken && res.data?.refreshToken) {
-        // Lưu token + username vào AsyncStorage
-        await AsyncStorage.setItem('accessToken', res.data.accessToken);
-        await AsyncStorage.setItem('refreshToken', res.data.refreshToken);
-        await AsyncStorage.setItem("username", res.data.Username || email);
-
-        // Nếu muốn rememberMe → giữ refreshToken lâu hơn
-        await AsyncStorage.setItem('rememberMe', rememberMe ? "1" : "0");
-
-        // Chuyển sang Home (hoặc màn chính của app)
-        navigation.replace('MainTabs');
-      } else {
-        Alert.alert('Lỗi', 'Đăng nhập thất bại: không nhận được token.');
+      if (!response.ok) {
+        Alert.alert('Lỗi', 'Đăng nhập thất bại');
+        return;
       }
+      let data = await response.json();
+      // Lưu token vào AsyncStorage
+      await AsyncStorage.setItem('accessToken', data.accessToken);
+      await AsyncStorage.setItem('refreshToken', data.refreshToken);
+      global.expireMs = data.expireMs + Date.now();
+      // Nếu muốn rememberMe → giữ refreshToken lâu hơn
+      await AsyncStorage.setItem('rememberMe', rememberMe ? "1" : "0");
+      // Chuyển sang Home (hoặc màn chính của app)
+      navigation.replace('MainTabs');
     } catch (err) {
       console.error('Login error:', err);
-      Alert.alert('Lỗi đăng nhập', err.response?.data?.message || 'Có lỗi xảy ra.');
+      Alert.alert('Lỗi đăng nhập', 'Có lỗi xảy ra.');
     } finally {
       setLoading(false);
     }

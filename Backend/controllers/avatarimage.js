@@ -10,4 +10,4 @@ async function getAvatarImageList(req, res) {
     }
 }
 
-module.exports = { getAvatarImageList }
+module.exports = { getAvatarImageList };

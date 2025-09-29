@@ -66,6 +66,8 @@ export default function AccountInfoScreen() {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json'
       }
+    }).catch(error => {
+      console.log('Lỗi khi gọi API đăng xuất:', error);
     });
 
     await AsyncStorage.removeItem('accessToken');

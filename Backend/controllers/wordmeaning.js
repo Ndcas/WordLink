@@ -76,4 +76,4 @@ async function explainPronunciation(req, res) {
     }
 }
 
-module.exports = { getPronunciation, explainPronunciation }
+module.exports = { getPronunciation, explainPronunciation };

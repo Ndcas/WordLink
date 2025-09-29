@@ -682,4 +682,4 @@ function unexpectedDisconnection(socket) {
     });
 }
 
-module.exports = { connect, playWithBot, playWithPlayer, unexpectedDisconnection }
+module.exports = { connect, playWithBot, playWithPlayer, unexpectedDisconnection };

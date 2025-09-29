@@ -49,4 +49,4 @@ async function getMatchHistory(req, res) {
     }
 }
 
-module.exports = { getMatchHistory }
+module.exports = { getMatchHistory };

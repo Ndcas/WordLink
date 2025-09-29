@@ -154,4 +154,4 @@ function initAssociation() {
     });
 }
 
-module.exports = initAssociation
+module.exports = initAssociation;

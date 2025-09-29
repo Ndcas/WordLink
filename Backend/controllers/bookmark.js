@@ -79,4 +79,4 @@ async function isBookmarked(req, res) {
     }
 }
 
-module.exports = { getBookmarks, newBookmark, deleteBookmark, isBookmarked }
+module.exports = { getBookmarks, newBookmark, deleteBookmark, isBookmarked };

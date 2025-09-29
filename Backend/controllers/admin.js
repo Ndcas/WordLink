@@ -675,4 +675,4 @@ async function resetPass(req, res) {
     }
 }
 
-module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toAddWord, addWord, deleteWord, toWordDetails, editWord, addMeaning, deleteMeaning, toEditMeaning, editMeaning, toChangePass, changePass, toResetPass, sendOTP, resetPass }
+module.exports = { toIndex, verify, dangNhap, dangXuat, toReport, toAccount, lockAccount, unlockAccount, toAccountDetails, editAccount, toWord, toAddWord, addWord, deleteWord, toWordDetails, editWord, addMeaning, deleteMeaning, toEditMeaning, editMeaning, toChangePass, changePass, toResetPass, sendOTP, resetPass };
