@@ -19,7 +19,7 @@ export default function AccountInfoScreen() {
         await checkAndRefreshAccessToken();
         let token = await AsyncStorage.getItem("accessToken");
         if (!token) {
-          Alert.alert("Lỗi", "Không tìm thấy access token, vui lòng đăng nhập lại.");
+          Alert.alert("Error", "Can't find the access token, please try again.");
           return;
         }
         let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`, {
@@ -30,7 +30,7 @@ export default function AccountInfoScreen() {
           },
         });
         if (!res.ok) {
-          throw new Error("Không lấy được thông tin tài khoản");
+          throw new Error("Can't fetch account information");
         }
         setAccount(await res.json());
         res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAnalyticReport`, {
@@ -41,14 +41,14 @@ export default function AccountInfoScreen() {
           },
         });
         if (!res.ok) {
-          throw new Error("Không lấy được thông tin tài khoản");
+          throw new Error("Can't fetch analytic information");
         }
         if (res.ok) {
           setAnalytic(await res.json());
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin tài khoản:", error);
-        Alert.alert("Lỗi", error.message || "Không thể tải thông tin tài khoản.");
+        Alert.alert("Error", error.message || "Can't fetch account infromation.");
       } finally {
         setLoading(false);
       }
@@ -75,7 +75,7 @@ export default function AccountInfoScreen() {
     await AsyncStorage.removeItem('refreshToken');
     navigation.replace('LoginScreen');
     console.error('Lỗi logout:', err);
-    Alert.alert('Lỗi', 'Đăng xuất thất bại.');
+    Alert.alert('Error', 'Logout failed.');
   };
 
   if (loading) {
@@ -89,7 +89,7 @@ export default function AccountInfoScreen() {
   if (!account) {
     return (
       <View style={styles.center}>
-        <Text>Không có thông tin tài khoản</Text>
+        <Text>No account infromation</Text>
       </View>
     );
   }
@@ -104,33 +104,33 @@ export default function AccountInfoScreen() {
 
         <Text style={styles.username}>👤 {account.Username}</Text>
         <Text style={styles.info}>📧 {account.Email}</Text>
-        <Text style={styles.info}>⭐ Điểm: {account.Score}</Text>
+        <Text style={styles.info}>⭐ Point: {account.Score}</Text>
 
         <View style={{ width: "80%" }}>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận dã chơi:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Match played:
             <Text style={{ fontWeight: "normal" }}> {analytic.numOfMatchesPlayed}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận thắng:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Match won:
             <Text style={{ fontWeight: "normal" }}> {analytic.pvpWin}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Số trận thua:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Match lost:
             <Text style={{ fontWeight: "normal" }}> {analytic.pvpLose}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Số từ đã dùng:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Words used:
             <Text style={{ fontWeight: "normal" }}> {analytic.numOfWordsUsed}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Trung bình độ phổ biến:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>Average word popularity:
             <Text style={{ fontWeight: "normal" }}> {analytic.avgPopularity}</Text>
           </Text>
 
-          <Text style={[styles.info, { marginTop: 10, alignSelf: "center", fontWeight: "bold" }]}>100 từ gần đây</Text>
+          <Text style={[styles.info, { marginTop: 10, alignSelf: "center", fontWeight: "bold" }]}>Latest 100 words</Text>
           <View style={{ flexDirection: 'column' }}>
             <View style={{ flex: 1, flexDirection: 'row' }}>
               <View style={{ flex: 1, justifyContent: "center", backgroundColor: "#f7de83ff" }}>
-                <Text style={{ marginLeft: "15%", fontWeight: "bold" }}>Từ vựng</Text>
+                <Text style={{ marginLeft: "15%", fontWeight: "bold" }}>Word</Text>
               </View>
               <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end", backgroundColor: "#f7de83ff" }}>
-                <Text style={{ marginRight: "15%", fontWeight: "bold" }}>Số lần</Text>
+                <Text style={{ marginRight: "15%", fontWeight: "bold" }}>Count</Text>
               </View>
             </View>
             {

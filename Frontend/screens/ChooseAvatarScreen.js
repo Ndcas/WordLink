@@ -41,7 +41,7 @@ const ChooseAvatarScreen = () => {
 
   const handleComplete = async () => {
     if (!selectedAvatar) {
-      Alert.alert('Lỗi', 'Vui lòng chọn một avatar.');
+      Alert.alert('Error', 'Please select an avatar.');
       return;
     }
 
@@ -61,14 +61,14 @@ const ChooseAvatarScreen = () => {
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Thành công', 'Cập nhật hồ sơ hoàn tất!');
+        Alert.alert('Success', 'Profile successfully updated!');
         navigation.navigate('Home'); // điều hướng về màn hình Home (hoặc màn khác)
       } else {
-        Alert.alert('Lỗi', data.message || 'Cập nhật thất bại.');
+        Alert.alert('Error', data.message || 'Update failed.');
       }
     } catch (error) {
       console.error(error);
-      Alert.alert('Lỗi', 'Không thể kết nối tới server.');
+      Alert.alert('Error', "Can't connect to the server.");
     }
   };
 

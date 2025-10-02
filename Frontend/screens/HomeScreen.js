@@ -119,22 +119,6 @@ export default function HomeScreen() {
                 <FontAwesome5 name="crosshairs" size={25} color="#F3C623" />
                 <Text style={styles.menuText}>MULTIPLAYER</Text>
             </TouchableOpacity>
-            {/* Leaderboards */}
-            {/* <Text style={styles.leaderboardsTitle}>LEADERBOARDS</Text>
-      <View style={styles.leaderboards}>
-        <View style={styles.podium}>
-          <Image source={require('./assets/oggy.png')} style={styles.podiumAvatar} />
-          <Text style={styles.podiumRank}>2</Text>
-        </View>
-        <View style={styles.podium}>
-          <Image source={require('./assets/oggy.png')} style={styles.podiumAvatar} />
-          <Text style={styles.podiumRank}>1</Text>
-        </View>
-        <View style={styles.podium}>
-          <Image source={require('./assets/oggy.png')} style={styles.podiumAvatar} />
-          <Text style={styles.podiumRank}>3</Text>
-        </View>
-      </View> */}
         </SafeAreaView>
     );
 }

@@ -23,12 +23,12 @@ const SignUpScreen = ({ navigation }) => {
     // Đăng ký + login
     const handleChangePassword = async () => {
         if (!old_password || !new_password || !re_password) {
-            Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+            Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
         if (new_password.trim() != re_password.trim()) {
-            Alert.alert("Lỗi", "Xác nhận mật khẩu không khớp!");
+            Alert.alert("Error", "Re-password does not match!");
             return;
         }
 
@@ -50,27 +50,27 @@ const SignUpScreen = ({ navigation }) => {
             const data = await res.json();
 
             if (res.ok) {
-                Alert.alert("Cài lại mật khẩu thành công");
+                Alert.alert("Success", "Password changed successfully!");
                 navigation.goBack();
                 return;
             }
 
             if (!res.ok) {
-                Alert.alert("Lỗi", data.error || "Cài lại mật khẩu thất bại");
+                Alert.alert("Error", data.error || "Change password failed");
                 return;
             }
         } catch (err) {
-            Alert.alert("Lỗi", err);
+            Alert.alert("Error", err);
         }
     };
 
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.logo}>Đổi mật khẩu</Text>
+                <Text style={styles.logo}>Change password</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Mật khẩu cũ"
+                    placeholder="Old password"
                     placeholderTextColor="#aaa"
                     secureTextEntry
                     value={old_password}
@@ -79,7 +79,7 @@ const SignUpScreen = ({ navigation }) => {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Mật khẩu mới"
+                    placeholder="New password"
                     placeholderTextColor="#aaa"
                     secureTextEntry
                     value={new_password}
@@ -87,7 +87,7 @@ const SignUpScreen = ({ navigation }) => {
                 />
                 <TextInput
                     style={styles.input}
-                    placeholder="Xác nhận mật khẩu"
+                    placeholder="Re-enter new password"
                     placeholderTextColor="#aaa"
                     secureTextEntry
                     value={re_password}
@@ -95,7 +95,7 @@ const SignUpScreen = ({ navigation }) => {
                 />
 
                 <TouchableOpacity style={styles.button} onPress={handleChangePassword}>
-                    <Text style={styles.buttonText}>CÀI LẠI MẬT KHẨU</Text>
+                    <Text style={styles.buttonText}>CHANGE PASSWORD</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>

@@ -40,7 +40,7 @@ export default function MultiplayerScreen({ navigation }) {
       socketRef.current = socket;
 
       socket.on("connect", () => {
-        setStatus("Đã kết nối");
+        setStatus("Connected.");
         socket.emit("authentication", refreshToken, avatarImage);
       });
 
@@ -53,7 +53,7 @@ export default function MultiplayerScreen({ navigation }) {
       });
 
       socket.on("waiting for a match", () => {
-        setStatus("Đang chờ người chơi khác...");
+        setStatus("Waiting for other players...");
       });
 
       socket.on("match found", (data) => {
@@ -61,19 +61,19 @@ export default function MultiplayerScreen({ navigation }) {
         setOpponent({ username: data.opponent, avatarImage: data.avatarImage });
         setUsedWords([]);
         setCurrentWord(null);
-        setStatus("Đã tìm thấy trận!");
+        setStatus("Match found!");
       });
 
       socket.on("your turn", (data) => {
         setIsMyTurn(true);
         setCurrentWord(data?.currentWord || null);
         setUsedWords(data?.usedWords || []);
-        setStatus("Lượt của bạn");
+        setStatus("Your turn!");
         setTimer(30); // reset timer mỗi lượt
       });
 
       socket.on("invalid word", () => {
-        Alert.alert("❌ Lỗi", "Từ không hợp lệ!");
+        Alert.alert("Error", "Invalid word!");
       });
 
       socket.on("valid word", (data) => {
@@ -84,8 +84,8 @@ export default function MultiplayerScreen({ navigation }) {
       socket.on("match result", (data) => {
         setInMatch(false);
         setIsMyTurn(false);
-        const txt = data.result == 1 ? "Bạn thắng 🎉" : "Bạn thua 😢";
-        Alert.alert("Kết quả", `${txt}\nScore: ${data?.scoreD ?? "-"}`);
+        const txt = data.result == 1 ? "You've won 🎉" : "You;ve lost 😢";
+        Alert.alert("Result", `${txt}\nScore: ${data?.scoreD ?? "-"}`);
         navigation.reset({ index: 0, routes: [{ name: "Home" }] });
       });
 
@@ -105,7 +105,7 @@ export default function MultiplayerScreen({ navigation }) {
     if (isMyTurn && timer > 0) {
       interval = setInterval(() => setTimer((t) => t - 1), 1000);
     } else if (timer === 0 && isMyTurn) {
-      Alert.alert("⏰ Hết giờ!", "Bạn đã bỏ lỡ lượt.");
+      Alert.alert("⏰ Time out!", "You've ran out of time.");
       setIsMyTurn(false);
       if (socketRef.current) socketRef.current.emit("bot win"); // hoặc emit pass turn
     }
@@ -115,12 +115,12 @@ export default function MultiplayerScreen({ navigation }) {
   const sendWord = () => {
     if (!input.trim()) return;
     if (!currentWord) {
-      Alert.alert("Lỗi", "Chưa có từ bắt đầu!");
+      Alert.alert("Error", "Enter a starting word!");
       return;
     }
     let sendWord = input.trim().toLowerCase();
     if (sendWord[0] !== currentWord[currentWord.length - 1]) {
-      Alert.alert("Từ không hợp lệ", "Chữ cái đầu phải khớp với chữ cuối của từ trước!");
+      Alert.alert("Invalid word", "The first character must match the last character of the last word!");
       return;
     }
     if (socketRef.current) {
@@ -138,8 +138,8 @@ export default function MultiplayerScreen({ navigation }) {
         <ActivityIndicator size="large" color="#10375C" style={{ marginTop: 30 }} />
       ) : (
         <View style={{ flex: 1, width: "100%" }}>
-          <Text style={styles.opponent}>Đối thủ: {opponent?.username}</Text>
-          <Text style={styles.current}>Từ hiện tại: {currentWord || "—"}</Text>
+          <Text style={styles.opponent}>Opponent: {opponent?.username}</Text>
+          <Text style={styles.current}>Current word: {currentWord || "—"}</Text>
           {isMyTurn && <Text style={styles.timer}>⏳ {timer}s</Text>}
 
           <ScrollView style={styles.wordList}>
@@ -153,7 +153,7 @@ export default function MultiplayerScreen({ navigation }) {
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
-              placeholder="Nhập từ..."
+              placeholder="Enter a word..."
               value={input}
               onChangeText={setInput}
               editable={isMyTurn}
@@ -163,7 +163,7 @@ export default function MultiplayerScreen({ navigation }) {
               onPress={sendWord}
               disabled={!isMyTurn}
             >
-              <Text style={styles.sendText}>Gửi</Text>
+              <Text style={styles.sendText}>Send</Text>
             </TouchableOpacity>
           </View>
         </View>

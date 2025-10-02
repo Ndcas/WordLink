@@ -24,7 +24,7 @@ const SignUpScreen = ({ navigation }) => {
   // Gửi OTP
   const handleGetOTP = async () => {
     if (!email.trim()) {
-      Alert.alert("Lỗi", "Vui lòng nhập email");
+      Alert.alert("Error", "Please enter your email");
       return;
     }
     try {
@@ -35,20 +35,20 @@ const SignUpScreen = ({ navigation }) => {
       });
       const data = await res.json();
       if (res.ok) {
-        Alert.alert("Thành công", "OTP đã được gửi về email");
+        Alert.alert("Success", "OTP has been sent to your email");
         setOtpSent(true);
       } else {
-        Alert.alert("Lỗi", data.error || "Không thể gửi OTP");
+        Alert.alert("Error", data.error || "Can't send OTP");
       }
     } catch (err) {
-      Alert.alert("Lỗi", "Không thể kết nối server");
+      Alert.alert("Error", "Can't connect to server");
     }
   };
 
   // Đăng ký + login
   const handleSignUp = async () => {
     if (!username || !password || !email || !otp) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
@@ -67,19 +67,19 @@ const SignUpScreen = ({ navigation }) => {
       const data = await res.json();
 
       if (res.ok) {
-        Alert.alert("Đăng ký thành công");
+        Alert.alert("Success", "Sign up successful");
         navigation.replace("LoginScreen");
         return;
       }
 
       if (!res.ok) {
-        Alert.alert("Lỗi", data.message || "Đăng ký thất bại");
+        Alert.alert("Error", data.message || "Sign up failed");
         return;
       }
 
       
     } catch (err) {
-      Alert.alert("Lỗi", "Không thể kết nối server");
+      Alert.alert("Error", "Can't connect to server");
     }
   };
 
@@ -97,21 +97,21 @@ const SignUpScreen = ({ navigation }) => {
         />
 
         <TouchableOpacity style={styles.button} onPress={handleGetOTP}>
-          <Text style={styles.buttonText}>LẤY OTP</Text>
+          <Text style={styles.buttonText}>SEND OTP</Text>
         </TouchableOpacity>
 
         {otpSent && (
           <>
             <TextInput
               style={styles.input}
-              placeholder="Tên tài khoản"
+              placeholder="Username"
               placeholderTextColor="#aaa"
               value={username}
               onChangeText={setUsername}
             />
             <TextInput
               style={styles.input}
-              placeholder="Mật khẩu"
+              placeholder="Password"
               placeholderTextColor="#aaa"
               secureTextEntry
               value={password}
@@ -127,7 +127,7 @@ const SignUpScreen = ({ navigation }) => {
             />
 
             <TouchableOpacity style={styles.button} onPress={handleSignUp}>
-              <Text style={styles.buttonText}>ĐĂNG KÝ</Text>
+              <Text style={styles.buttonText}>SIGNUP</Text>
             </TouchableOpacity>
           </>
         )}

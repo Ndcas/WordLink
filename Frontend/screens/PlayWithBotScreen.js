@@ -47,13 +47,13 @@ export default function PlayWithBotScreen({ navigation }) {
       });
 
       newSocket.on("invalid word", () => {
-        Alert.alert("❌ Lỗi", "Từ không hợp lệ!");
+        Alert.alert("Error", "Invalid word!");
       });
 
       newSocket.on("match result", (data) => {
         Alert.alert(
-          "🏆 Kết quả",
-          `Kết quả: ${data.result === 1 ? "Bạn thắng" : "Bạn thua"}\nĐiểm: ${data.score} (+${data.scoreD})`
+          "🏆 Result",
+          `Result: ${data.result === 1 ? "You've won" : "You've lost"}\nPoint: ${data.score} (+${data.scoreD})`
         );
         newSocket.disconnect();
         navigation.replace('MainTabs');

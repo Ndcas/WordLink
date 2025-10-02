@@ -25,7 +25,7 @@ const SignUpScreen = ({ navigation }) => {
     // Gửi OTP
     const handleGetOTP = async () => {
         if (!email.trim()) {
-            Alert.alert("Lỗi", "Vui lòng nhập email");
+            Alert.alert("Error", "Please enter your email");
             return;
         }
         try {
@@ -36,25 +36,25 @@ const SignUpScreen = ({ navigation }) => {
             });
             const data = await res.json();
             if (res.ok) {
-                Alert.alert("Thành công", "OTP đã được gửi về email");
+                Alert.alert("Succcess", "OTP has been sent to your email");
                 setOtpSent(true);
             } else {
-                Alert.alert("Lỗi", data.error || "Không thể gửi OTP");
+                Alert.alert("Error", data.error || "Can't send OTP");
             }
         } catch (err) {
-            Alert.alert("Lỗi", "Không thể kết nối server");
+            Alert.alert("Error", "Can't connect to server");
         }
     };
 
     // Đăng ký + login
     const handleResetPassword = async () => {
         if (!password || !re_password || !email || !otp) {
-            Alert.alert("Lỗi", "Vui lòng nhập đầy đủ thông tin");
+            Alert.alert("Error", "Please fill in all fields");
             return;
         }
 
         if(password.trim() != re_password.trim()){
-            Alert.alert("Lỗi", "Xác nhận mật khẩu không khớp!");
+            Alert.alert("Error", "Re-password does not match!");
             return;
         }
 
@@ -72,17 +72,17 @@ const SignUpScreen = ({ navigation }) => {
             const data = await res.json();
 
             if (res.ok) {
-                Alert.alert("Cài lại mật khẩu thành công");
+                Alert.alert("Success", "Reset password successful");
                 navigation.replace("LoginScreen");
                 return;
             }
 
             if (!res.ok) {
-                Alert.alert("Lỗi", data.message || "Cài lại mật khẩu thất bại");
+                Alert.alert("Error", data.message || "Reset password failed");
                 return;
             }
         } catch (err) {
-            Alert.alert("Lỗi", "Không thể kết nối server");
+            Alert.alert("Error", "Can't connect to server");
         }
     };
 
@@ -100,7 +100,7 @@ const SignUpScreen = ({ navigation }) => {
                 />
 
                 <TouchableOpacity style={styles.button} onPress={handleGetOTP}>
-                    <Text style={styles.buttonText}>LẤY OTP</Text>
+                    <Text style={styles.buttonText}>SEND OTP</Text>
                 </TouchableOpacity>
 
                 {otpSent && (
@@ -115,7 +115,7 @@ const SignUpScreen = ({ navigation }) => {
                         />
                         <TextInput
                             style={styles.input}
-                            placeholder="Mật khẩu"
+                            placeholder="Password"
                             placeholderTextColor="#aaa"
                             secureTextEntry
                             value={password}
@@ -123,7 +123,7 @@ const SignUpScreen = ({ navigation }) => {
                         />
                         <TextInput
                             style={styles.input}
-                            placeholder="Xác nhận mật khẩu"
+                            placeholder="Re-enter password"
                             placeholderTextColor="#aaa"
                             secureTextEntry
                             value={re_password}
@@ -132,7 +132,7 @@ const SignUpScreen = ({ navigation }) => {
 
 
                         <TouchableOpacity style={styles.button} onPress={handleResetPassword}>
-                            <Text style={styles.buttonText}>CÀI LẠI MẬT KHẨU</Text>
+                            <Text style={styles.buttonText}>RESET PASSWORD</Text>
                         </TouchableOpacity>
                     </>
                 )}

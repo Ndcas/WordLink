@@ -46,7 +46,7 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng nhập đầy đủ Email và Mật khẩu.');
+      Alert.alert('Error', 'Please fill in all fields.');
       return;
     }
 
@@ -62,7 +62,7 @@ const LoginScreen = () => {
         password: password.trim() // backend yêu cầu "APassword"
       });
       if (!response.ok) {
-        Alert.alert('Lỗi', 'Đăng nhập thất bại');
+        Alert.alert('Error', 'Login failed. Please check your credentials.');
         return;
       }
       let data = await response.json();
@@ -76,7 +76,7 @@ const LoginScreen = () => {
       navigation.replace('MainTabs');
     } catch (err) {
       console.error('Login error:', err);
-      Alert.alert('Lỗi đăng nhập', 'Có lỗi xảy ra.');
+      Alert.alert('Login error', 'Something went wrong during login.');
     } finally {
       setLoading(false);
     }
@@ -135,7 +135,7 @@ const LoginScreen = () => {
               disabled={loading}
             >
               <Text style={styles.loginButtonText}>
-                {loading ? 'ĐANG ĐĂNG NHẬP...' : 'LOGIN'}
+                {loading ? 'LOGGING IN...' : 'LOGIN'}
               </Text>
             </TouchableOpacity>
 

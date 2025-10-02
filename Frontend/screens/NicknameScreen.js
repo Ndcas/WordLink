@@ -14,7 +14,7 @@ const NicknameScreen = () => {
 
   const handleContinue = () => {
     if (!nickname.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập nickname.');
+      Alert.alert('Error', 'Please Enter your nickname.');
       return;
     }
 
