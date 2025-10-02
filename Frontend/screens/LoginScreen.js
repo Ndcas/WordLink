@@ -61,6 +61,20 @@ const LoginScreen = () => {
         email: email.trim(),       // backend yêu cầu "Email"
         password: password.trim() // backend yêu cầu "APassword"
       });
+      switch (response.status) {
+        case 400:
+          Alert.alert("Error", "Invalid username or email.");
+          return;
+        case 403:
+          Alert.alert("Error", "This account as been baned.");
+          return;
+        case 429:
+          Alert.alert("Error", "Too many requests, please wait and try again.");
+          return;
+        case 500:
+          Alert.alert("Error", "Server error.");
+          return;
+      }
       if (!response.ok) {
         Alert.alert('Error', 'Login failed. Please check your credentials.');
         return;

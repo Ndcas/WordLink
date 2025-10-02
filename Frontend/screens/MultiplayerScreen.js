@@ -114,13 +114,13 @@ export default function MultiplayerScreen({ navigation }) {
 
   const sendWord = () => {
     if (!input.trim()) return;
-    if (!currentWord) {
-      Alert.alert("Error", "Enter a starting word!");
+    let sendWord = input.trim().toLowerCase();
+    if (currentWord && sendWord[0] !== currentWord[currentWord.length - 1]) {
+      Alert.alert("Invalid word", "The first character must match the last character of the last word!");
       return;
     }
-    let sendWord = input.trim().toLowerCase();
-    if (sendWord[0] !== currentWord[currentWord.length - 1]) {
-      Alert.alert("Invalid word", "The first character must match the last character of the last word!");
+    if (usedWords.includes(sendWord.trim().toLowerCase())) {
+      Alert.alert("Invalid word", "This word has already been used!");
       return;
     }
     if (socketRef.current) {

@@ -33,6 +33,19 @@ const SignUpScreen = ({ navigation }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim() }), // Backend yêu cầu "Email"
       });
+
+      switch (res.status) {
+        case 400:
+          Alert.alert("Error", "Invalid username or email.");
+          return;
+        case 429:
+          Alert.alert("Error", "Too many requests, please wait and try again.");
+          return;
+        case 500:
+          Alert.alert("Error", "Server error.");
+          return;
+      }
+
       const data = await res.json();
       if (res.ok) {
         Alert.alert("Success", "OTP has been sent to your email");
@@ -77,7 +90,7 @@ const SignUpScreen = ({ navigation }) => {
         return;
       }
 
-      
+
     } catch (err) {
       Alert.alert("Error", "Can't connect to server");
     }

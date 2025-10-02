@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { get, post } from '../utils/requestWrapper';
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -33,20 +34,33 @@ const SignUpScreen = ({ navigation }) => {
         }
 
         try {
-            await checkAndRefreshAccessToken();
-
             // Gọi chanePassword
-            const res = await fetch(`${API_URL}/account/changePassword`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${await AsyncStorage.getItem('accessToken')}`
-                },
-                body: JSON.stringify({
-                    oldPassword: old_password.trim(),
-                    newPassword: new_password.trim()
-                }),
-            });
+            let res = await post('/account/changePassword', { oldPassword: old_password.trim(), newPassword: new_password.trim() }, 'access');
+
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Bad request.");
+                    return;
+                case 401:
+                    Alert.alert("Error", "Unauthorized, please log in again.");
+                    navigation.dispatch(
+                        CommonActions.reset({
+                            index: 0,
+                            routes: [{ name: "LoginScreen" }],
+                        })
+                    );
+                    return;
+                case 404:
+                    Alert.alert("Error", "Account not found.");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+
             const data = await res.json();
 
             if (res.ok) {

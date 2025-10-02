@@ -9,14 +9,14 @@ import {
     ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { post } from '../utils/requestWrapper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
-const SignUpScreen = ({ navigation }) => {
+const ForgotPasswordScreen = ({ navigation }) => {
     const [email, setEmail] = useState("");
-    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [re_password, setRePassword] = useState("");
     const [otp, setOtp] = useState("");
@@ -29,11 +29,23 @@ const SignUpScreen = ({ navigation }) => {
             return;
         }
         try {
-            const res = await fetch(`${API_URL}/account/getOTPResetPassword`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: email.trim() }), // Backend yêu cầu "Email"
-            });
+            let res = await post('/account/getOTPResetPassword', { email: email.trim() });
+
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Invalid email.");
+                    return;
+                case 404:
+                    Alert.alert("Error", "Account not found.");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+
             const data = await res.json();
             if (res.ok) {
                 Alert.alert("Succcess", "OTP has been sent to your email");
@@ -53,22 +65,34 @@ const SignUpScreen = ({ navigation }) => {
             return;
         }
 
-        if(password.trim() != re_password.trim()){
+        if (password.trim() != re_password.trim()) {
             Alert.alert("Error", "Re-password does not match!");
             return;
         }
 
         try {
             // Gọi signUp
-            const res = await fetch(`${API_URL}/account/resetPassword`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: email.trim(),
-                    newPassword: password.trim(),
-                    otp: otp.trim(),
-                }),
+            let res = await post('/account/resetPassword', {
+                email: email.trim(),
+                newPassword: password.trim(),
+                otp: otp.trim(),
             });
+
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Invalid email.");
+                    return;
+                case 404:
+                    Alert.alert("Error", "Account not found.");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
+ 
             const data = await res.json();
 
             if (res.ok) {
@@ -181,4 +205,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default SignUpScreen;
+export default ForgotPasswordScreen;

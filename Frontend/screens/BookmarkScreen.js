@@ -1,11 +1,11 @@
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ActivityIndicator, 
-  Alert, 
-  TouchableOpacity, 
-  ScrollView 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  ScrollView
 } from "react-native";
 import { get } from "../utils/requestWrapper";
 import { useFocusEffect, CommonActions } from "@react-navigation/native";

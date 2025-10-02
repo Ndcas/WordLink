@@ -7,7 +7,6 @@ import Leaderboard from './screens/LeaderBoard';
 import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
 import Dictionary from './screens/Dictionary';
-import SplashScreen from './screens/SplashScreen';
 import { useFonts } from 'expo-font';
 import NicknameScreen from './screens/NicknameScreen';
 import ChooseAvatarScreen from './screens/ChooseAvatarScreen';
@@ -75,7 +74,6 @@ export default function App() {
         <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
         <Stack.Screen name="NicknameScreen" component={NicknameScreen} />
         <Stack.Screen name="ChooseAvatarScreen" component={ChooseAvatarScreen} />
-        <Stack.Screen name="SplashScreen" component={SplashScreen} />
         <Stack.Screen name="AccountInfoScreen" component={AccountInfoScreen} />
         <Stack.Screen name="PlayWithBotScreen" component={PlayWithBotScreen} />
         <Stack.Screen name="MultiplayerScreen" component={MultiplayerScreen} />

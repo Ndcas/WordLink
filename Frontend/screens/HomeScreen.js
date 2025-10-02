@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useState, useEffect } from 'react';
+import { getAvatarImage } from '../utils/getAvatarImage';
+import { get } from '../utils/requestWrapper';
 
 export default function HomeScreen() {
 
@@ -14,7 +16,7 @@ export default function HomeScreen() {
     const [rank, setRank] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         const loadUserInfo = async () => {
             try {
                 const accessToken = await AsyncStorage.getItem("accessToken");
@@ -27,32 +29,50 @@ export default function HomeScreen() {
                 }
 
                 // Lấy thông tin account
-                const infoUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`;
-                const infoRes = await fetch(infoUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
+                let infoRes = await get("/account/getAccountInfo", {}, 'access');
+                switch (infoRes.status) {
+                    case 401:
+                        Alert.alert("Error", "Unauthorized, please log in again.");
+                        navigation.dispatch(
+                            CommonActions.reset({
+                                index: 0,
+                                routes: [{ name: "LoginScreen" }],
+                            })
+                        );
+                        return;
+                    case 429:
+                        Alert.alert("Error", "Too many requests, please wait and try again.");
+                        return;
+                    case 500:
+                        Alert.alert("Error", "Server error.");
+                        return;
+                }
                 if (infoRes.ok) {
                     const infoData = await infoRes.json();
                     setUsername(infoData.Username || "Guest");
                     setScore(infoData.Score || 0);
-                    if (infoData.AvatarImage) setAvatar({ uri: infoData.AvatarImage });
+                    if (infoData.AvatarImage) setAvatar(infoData.AvatarImage);
                 }
 
                 // Lấy xếp hạng
-                const rankUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/getAccountRank`;
-                const rankRes = await fetch(rankUrl, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
+                let rankRes = await get("/account/getAccountRank", {}, 'access');
+                switch (rankRes.status) {
+                    case 401:
+                        Alert.alert("Error", "Unauthorized, please log in again.");
+                        navigation.dispatch(
+                            CommonActions.reset({
+                                index: 0,
+                                routes: [{ name: "LoginScreen" }],
+                            })
+                        );
+                        return;
+                    case 429:
+                        Alert.alert("Error", "Too many requests, please wait and try again.");
+                        return;
+                    case 500:
+                        Alert.alert("Error", "Server error.");
+                        return;
+                }
                 if (rankRes.ok) {
                     const rankData = await rankRes.json();
                     setRank(rankData.rank || null);
@@ -64,7 +84,7 @@ export default function HomeScreen() {
             }
         };
         loadUserInfo();
-    }, []);
+    }, []));
 
     if (loading) {
         return (
@@ -80,7 +100,7 @@ export default function HomeScreen() {
             <View style={styles.header}>
                 <Text style={styles.title}>WORDLINK</Text>
                 <TouchableOpacity onPress={() => navigation.navigate('AccountInfoScreen')}>
-                    <Image source={avatar} style={styles.avatar} />
+                    <Image source={getAvatarImage(avatar)} style={styles.avatar} />
                 </TouchableOpacity>
             </View>
 
@@ -90,23 +110,23 @@ export default function HomeScreen() {
             <View style={styles.rankBox}>
                 {/* RANK */}
                 <View style={styles.rankItem}>
-                    <FontAwesome5 name="crown" size={24} color="#F3C623" style={styles.rankIcon} />
+                    <FontAwesome5 name="crown" size={33} color="#F3C623" style={[styles.rankIcon]} />
                     <View style={styles.rankTextGroup}>
-                        <Text style={styles.rankLabel}>RANK</Text>
-                        <Text style={styles.rankValue}>{rank !== null ? rank : '-'}</Text>
+                        <Text style={[styles.rankLabel, ]}>RANK</Text>
+                        <Text style={[styles.rankValue, ]}>{rank !== null ? rank : '-'}</Text>
                     </View>
                 </View>
 
                 {/* POINT */}
                 <View style={styles.rankItem}>
-                    <FontAwesome5 name="award" size={24} color="#F3C623" style={styles.rankIcon} />
+                    <FontAwesome5 name="award" size={33} color="#F3C623" style={styles.rankIcon} />
                     <View style={styles.rankTextGroup}>
                         <Text style={styles.rankLabel}>POINT</Text>
                         <Text style={styles.rankValue}>{score}</Text>
                     </View>
                 </View>
             </View>
-            
+
             {/* Menu */}
             <Text style={styles.playTitle}>LET’S PLAY</Text>
 
@@ -168,7 +188,6 @@ const styles = StyleSheet.create({
     rankItem: {
         flexDirection: 'row',
         alignItems: 'center',
-
     },
 
     rankIcon: {
@@ -178,6 +197,7 @@ const styles = StyleSheet.create({
     rankTextGroup: {
         flexDirection: 'column',
         justifyContent: 'center',
+        padding: 16,
     },
 
     rankLabel: {

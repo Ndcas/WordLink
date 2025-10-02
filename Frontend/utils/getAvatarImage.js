@@ -33,6 +33,10 @@ const avatarMap = {
     'avatar-cute-31.webp': avatar31,
 };
 
-export default function getAvatarImage(filename) {
+export function getAvatarImage(filename) {
     return avatarMap[filename] || defaultAvatar;
+}
+
+export function getAvatarList() {
+    return Object.keys(avatarMap);
 }

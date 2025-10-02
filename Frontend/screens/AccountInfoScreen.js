@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, Scr
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import checkAndRefreshAccessToken from "../utils/checkAndRefreshAccessToken";
-import getAvatarImage from "../utils/getAvatarImage";
+import { getAvatarImage } from "../utils/getAvatarImage";
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { get, post } from '../utils/requestWrapper';
 
 export default function AccountInfoScreen() {
   const [account, setAccount] = useState(null);
@@ -16,19 +17,30 @@ export default function AccountInfoScreen() {
     (async () => {
       try {
         setLoading(true);
-        await checkAndRefreshAccessToken();
-        let token = await AsyncStorage.getItem("accessToken");
-        if (!token) {
-          Alert.alert("Error", "Can't find the access token, please try again.");
-          return;
+
+        let res = await get("/account/getAccountInfo", {}, 'access');
+
+        switch (res.status) {
+          case 401:
+            Alert.alert("Error", "Unauthorized, please log in again.");
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: "LoginScreen" }],
+              })
+            );
+            return;
+          case 404:
+            Alert.alert("Error", "Account not found.");
+            return;
+          case 429:
+            Alert.alert("Error", "Too many requests, please wait and try again.");
+            return;
+          case 500:
+            Alert.alert("Error", "Server error.");
+            return;
         }
-        let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAccountInfo`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+
         if (!res.ok) {
           throw new Error("Can't fetch account information");
         }
@@ -48,7 +60,7 @@ export default function AccountInfoScreen() {
         }
       } catch (error) {
         console.error("Lỗi khi lấy thông tin tài khoản:", error);
-        Alert.alert("Error", error.message || "Can't fetch account infromation.");
+        Alert.alert("Error", "Can't fetch account infromation.");
       } finally {
         setLoading(false);
       }
@@ -57,18 +69,12 @@ export default function AccountInfoScreen() {
 
   //Đăng xuất
   const handleLogout = async () => {
-    let accessToken = AsyncStorage.getItem('accessToken');
-
-    const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/account/logOut`;
-    fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      }
-    }).catch(error => {
+    try {
+      await post('/account/logOut', {}, 'access');
+    }
+    catch (error) {
       console.log('Lỗi khi gọi API đăng xuất:', error);
-    });
+    };
 
     await AsyncStorage.removeItem('accessToken');
     await AsyncStorage.removeItem('username');
@@ -97,10 +103,13 @@ export default function AccountInfoScreen() {
   return (
     <ScrollView>
       <View style={styles.container}>
-        <Image
-          source={getAvatarImage(account.AvatarImage)}
-          style={styles.avatar}
-        />
+        <TouchableOpacity onPress={() => navigation.navigate("ChooseAvatarScreen")}>
+          <Image
+            source={getAvatarImage(account.AvatarImage)}
+            style={styles.avatar}
+          />
+        </TouchableOpacity>
+
 
         <Text style={styles.username}>👤 {account.Username}</Text>
         <Text style={styles.info}>📧 {account.Email}</Text>

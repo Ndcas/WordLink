@@ -11,27 +11,16 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
+import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
+import { getAvatarList, getAvatarImage } from '../utils/getAvatarImage';
+import { post } from '../utils/requestWrapper';
 
 const { width } = Dimensions.get('window');
 
 // Map avatar images với key string (sẽ gửi lên server)
-const avatars = [
-  require('../assets/avatar-cute-1.webp'),
-  require('../assets/avatar-cute-2.webp'),
-  require('../assets/avatar-cute-3.webp'),
-  require('../assets/avatar-cute-4.webp'),
-  require('../assets/avatar-cute-5.webp'),
-  require('../assets/avatar-cute-7.webp'),
-  require('../assets/avatar-cute-8.webp'),
-  require('../assets/avatar-cute-9.webp'),
-  require('../assets/avatar-cute-10.webp'),
-  require('../assets/avatar-cute-18.webp'),
-  require('../assets/avatar-cute-22.webp'),
-  require('../assets/avatar-cute-23.webp'),
-  require('../assets/avatar-cute-24.webp'),
-  require('../assets/avatar-cute-25.webp'),
-  require('../assets/avatar-cute-31.webp'),
-];
+const avatars = getAvatarList();;
+console.log(avatars);
+
 const ChooseAvatarScreen = () => {
   const route = useRoute();
   const navigation = useNavigation();
@@ -46,25 +35,38 @@ const ChooseAvatarScreen = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/account/changeUsernameAndAvatarImage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`, // token từ bước signup/login
-        },
-        body: JSON.stringify({
-          username: nickname,
-          avatarImage: selectedAvatar.key, // gửi key avatar thay vì require
-        }),
-      });
+      let res = await post(`/account/changeUsernameAndAvatarImage`, { avatarName: selectedAvatar }, 'access');
+      switch (res.status) {
+        case 400:
+          Alert.alert("Error", "Invalid username or avatar.");
+          return;
+        case 401:
+          Alert.alert("Error", "Unauthorized, please log in again.");
+          navigation.dispatch(
+            CommonActions.reset({
+              index: 0,
+              routes: [{ name: "LoginScreen" }],
+            })
+          );
+          return;
+        case 429:
+          Alert.alert("Error", "Too many requests, please wait and try again.");
+          return;
+        case 500:
+          Alert.alert("Error", "Server error.");
+          return;
+      }
+      if (!res.ok) {
+        Alert.alert("Error", "Cannot connect to server.");
+        return;
+      }
+      const data = await res.json();
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (res.ok) {
         Alert.alert('Success', 'Profile successfully updated!');
-        navigation.navigate('Home'); // điều hướng về màn hình Home (hoặc màn khác)
-      } else {
-        Alert.alert('Error', data.message || 'Update failed.');
+        navigation.navigate("MainTabs", {
+                screen: "Home",
+              });
       }
     } catch (error) {
       console.error(error);
@@ -80,7 +82,7 @@ const ChooseAvatarScreen = () => {
 
           <View style={styles.profileSection}>
             <View style={styles.selectedAvatarContainer}>
-              <Image source={selectedAvatar.src} style={styles.selectedAvatarImage} />
+              <Image source={getAvatarImage(selectedAvatar)} style={styles.selectedAvatarImage} />
             </View>
             <Text style={styles.userName}>{nickname}</Text>
           </View>
@@ -88,14 +90,14 @@ const ChooseAvatarScreen = () => {
           <View style={styles.avatarGrid}>
             {avatars.map((avatar, index) => (
               <TouchableOpacity
-                key={avatar.key}
+                key={index}
                 style={[
                   styles.avatarItem,
                   selectedAvatar.key === avatar.key && styles.avatarItemSelected,
                 ]}
                 onPress={() => setSelectedAvatar(avatar)}
               >
-                <Image source={avatar.src} style={styles.avatarItemImage} />
+                <Image source={getAvatarImage(avatar)} style={styles.avatarItemImage} />
               </TouchableOpacity>
             ))}
           </View>

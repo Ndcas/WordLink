@@ -14,15 +14,23 @@ const LeaderboardScreen = () => {
 
     const totalPages = Math.ceil(allData.length / limit);
 
-    const API_URL=process.env.EXPO_PUBLIC_API_URL;
+    const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
     async function getLeaderboard() {
         try {
             let res = await fetch(API_URL + "/account/getLeaderboard");
+            switch (res.status) {
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
             if (res.ok) {
                 let data = await res.json();
                 setAllData(data);
-                setVisibleData(data.slice(0, limit)); 
+                setVisibleData(data.slice(0, limit));
             } else {
                 console.error("Lỗi server:", res.status);
             }
@@ -72,17 +80,17 @@ const LeaderboardScreen = () => {
 
             <View style={styles.searchContainer}>
                 <View style={styles.searchBox}>
-                    <View style={{flex:1,alignItems:'center',justifyContent:'center'}}>
-                    <FontAwesome5 name="search" size={20} color="#999" style={styles.searchIcon} />
+                    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                        <FontAwesome5 name="search" size={20} color="#999" style={styles.searchIcon} />
                     </View>
-                    <View style={{flex:9}}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="SEARCH FOR PLAYER..."
-                        placeholderTextColor="#999"
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                    />
+                    <View style={{ flex: 9 }}>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder="SEARCH FOR PLAYER..."
+                            placeholderTextColor="#999"
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
                     </View>
                 </View>
             </View>
@@ -176,7 +184,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         height: 60,
         elevation: 3,
-        marginTop:-10
+        marginTop: -10
     },
 
     searchIcon: {

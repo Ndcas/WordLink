@@ -46,6 +46,17 @@ const Dictionary = ({ route }) => {
         setLoading(true);
         try {
             const res = await fetch(`${API_URL}/word/getWordSuggestions?qWord=${encodeURIComponent(query)}`);
+            switch (res.status) {
+                case 400:
+                    Alert.alert("Error", "Please enter a word.");
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
+            }
             if (res.ok) {
                 const data = await res.json();
                 setSuggestions(data);
@@ -74,9 +85,20 @@ const Dictionary = ({ route }) => {
     const getWordInformation = async (word) => {
         try {
             let res = await fetch(`${API_URL}/word/getWordInformation?word=${encodeURIComponent(word)}`);
-            if (res.status == 429) {
-                Alert.alert("Error", "Too many requests, please wait and try again.");
-                return;
+            switch (infoRes.status) {
+                case 400:
+                    Alert.alert("Error", "Please enter a word.");
+                    return;
+                case 404:
+                    Alert.alert("Error", "Word not found.");
+                    setWordDetail(null);
+                    return;
+                case 429:
+                    Alert.alert("Error", "Too many requests, please wait and try again.");
+                    return;
+                case 500:
+                    Alert.alert("Error", "Server error.");
+                    return;
             }
             if (!res.ok) {
                 Alert.alert("Error", "Server error, please try again.");
@@ -136,6 +158,9 @@ const Dictionary = ({ route }) => {
         try {
             const pronRes = await get("/wordmeaning/getPronunciation", { word: wordDetail.word, ipa: ipa });
             switch (pronRes.status) {
+                case 400:
+                    Alert.alert("Error", "Bad request");
+                    return;
                 case 404:
                     Alert.alert("Error", "Pronunciation not found");
                     return;
@@ -166,6 +191,9 @@ const Dictionary = ({ route }) => {
         try {
             const expRes = await get("/wordmeaning/explainPronunciation", { word: wordDetail.word, ipa: ipa });
             switch (expRes.status) {
+                case 400:
+                    Alert.alert("Error", "Bad request");
+                    return;
                 case 404:
                     Alert.alert("Error", "Explain not found");
                     return;
