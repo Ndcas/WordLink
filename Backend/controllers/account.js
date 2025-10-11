@@ -214,7 +214,13 @@ async function getAccountInfo(req, res) {
 
 async function getLeaderboard(req, res) {
     try {
-        let leaderboard = await db.query(`SELECT rank() OVER(ORDER BY Score Desc) 'Rank', Username, Score FROM Account WHERE Status = 1 ORDER BY Rank ASC LIMIT 100`, {
+        let leaderboard = await db.query(`
+            SELECT rank() OVER(ORDER BY Score Desc) 'Rank', Username, Score
+            FROM Account
+            WHERE Status = 1
+            ORDER BY Rank ASC
+            LIMIT 100
+        `, {
             type: QueryTypes.SELECT
         });
         return res.status(200).json(leaderboard);
@@ -228,7 +234,15 @@ async function getLeaderboard(req, res) {
 async function getAccountRank(req, res) {
     let AID = req.authorization.AID;
     try {
-        let account = await db.query(`SELECT * FROM (SELECT rank() OVER(ORDER BY Score Desc) 'Rank', AID FROM Account WHERE Status = 1) Ranked WHERE AID = :AID`, {
+        let account = await db.query(`
+            SELECT *
+            FROM (
+                SELECT rank() OVER(ORDER BY Score Desc) 'Rank', AID
+                FROM Account 
+                WHERE Status = 1
+            ) Ranked
+            WHERE AID = :AID
+        `, {
             replacements: { AID: AID },
             type: QueryTypes.SELECT
         });

@@ -1,3 +1,241 @@
 <%- include('../partials/header') %>
-<h1>Thống kê</h1>
+<style>
+    .chart-title-container {
+        height: 150px;
+        align-items: center;
+    }
+</style>
+<div class="container mt-5">
+    <div class="row mb-3 align-items-center">
+        <div class="col-3">Cập nhật lúc: <%= (new Date(reportTime)).toLocaleString('vi-VN') %></div>
+        <a href="/admin/toReport?force=1" class="btn rounded-pill bg-success text-white col-1">Tải lại</a>
+    </div>
+    <div class="row gap-3 justify-content-center mb-3">
+        <div class="col rounded bg-warning py-3" title="Số tài khoản đang hoạt động">
+            <p class="fw-bold text-center h-50 fs-5">Số tài khoản đang hoạt động</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= activeAccountCount %></p>
+        </div>
+        <div class="col rounded bg-warning py-3" title="Số từ trong từ điển">
+            <p class="fw-bold text-center h-50 fs-5">Số từ trong từ điển</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= wordCount %></p>
+        </div>
+        <div class="col rounded bg-warning py-3" title="Số nghĩa của từ">
+            <p class="fw-bold text-center h-50 fs-5">Số nghĩa của từ</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= meaningCount %></p>
+        </div>
+        <div class="col rounded bg-warning py-3" title="Số từ đã được sử dụng">
+            <p class="fw-bold text-center h-50 fs-5">Số từ đã được sử dụng</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= usedWordCount %></p>
+        </div>
+    </div>
+    <div class="row gap-3 justify-content-center mb-3">
+        <div class="col rounded bg-warning py-3" title="Độ phổ biến trung bình">
+            <p class="fw-bold text-center h-50 fs-5">Độ phổ biến trung bình</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= avgPopularity %></p>
+        </div>
+        <div class="col rounded bg-warning py-3" title="Số trận đấu với bot">
+            <p class="fw-bold text-center h-50 fs-5">Số trận đấu với bot</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= pveCount %></p>
+        </div>
+        <div class="col rounded bg-warning py-3" title="Số trận đấu với người chơi">
+            <p class="fw-bold text-center h-50 fs-5">Số trận đấu với người chơi</p>
+            <p class="fw-bold text-center h-50 fs-4"><%= pvpCount %></p>
+        </div>
+    </div>
+    <div class="row gap-1">
+        <div class="col d-flex align-items-center justify-content-center">
+            <h4 class="text-center">Biểu đồ số lượng từ ngữ theo độ phổ biến</h4>
+        </div>
+        <div class="col">
+            <h4 class="text-center">Biểu đồ số lượng từ được dùng theo độ phổ biến trong khoảng thời gian</h4>
+            <h5 class="text-center" id="usedWordCountByPopularityTimeRange"></h5>
+            <div class="row mb-1 justify-content-center">
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayUsedWordCountChart(1)">7d</button>
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayUsedWordCountChart(2)">12m</button>
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayUsedWordCountChart(3)">5y</button>
+            </div>
+        </div>
+    </div>
+    <div class="row gap-1 mb-3">
+        <div class="col">
+            <canvas id="wordCountChart">
+                <p class="text-center">Đã xảy ra lỗi</p>
+            </canvas>
+        </div>
+        <div class="col">
+            <canvas id="usedWordCountChart">
+                <p class="text-center">Đã xảy ra lỗi</p>
+            </canvas>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col">
+            <div class="text-center">
+                <h4>Biểu đồ số lượng trận đấu theo thời gian</h4>
+            </div>
+            <div class="row mb-1 justify-content-center">
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayMatchCountChart(1)">7d</button>
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayMatchCountChart(2)">12m</button>
+                <button class="btn rounded-pill bg-primary text-white mx-3 col-1" onclick="displayMatchCountChart(3)">5y</button>
+            </div>
+            <div>
+                <canvas id="matchCountChart">
+                    <p class="text-center">Đã xảy ra lỗi</p>
+                </canvas>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="/assets/js/chart.min.js"></script>
+<script>
+    const matchCountByDay = JSON.parse('<%- JSON.stringify(matchCountByDay) %>');
+    const matchCountByMonth = JSON.parse('<%- JSON.stringify(matchCountByMonth) %>');
+    const matchCountByYear = JSON.parse('<%- JSON.stringify(matchCountByYear) %>');
+    const wordCountByPopularity = JSON.parse('<%- JSON.stringify(wordCountByPopularity) %>');
+    const usedWordCountByPopularityTimeRange = document.getElementById('usedWordCountByPopularityTimeRange');
+    const usedWordCountByPopularityIn7d = JSON.parse('<%- JSON.stringify(usedWordCountByPopularityIn7d) %>');
+    const usedWordCountByPopularityIn12m = JSON.parse('<%- JSON.stringify(usedWordCountByPopularityIn12m) %>');
+    const usedWordCountByPopularityIn5y = JSON.parse('<%- JSON.stringify(usedWordCountByPopularityIn5y) %>');
+    const wordCountChart = new Chart(document.getElementById('wordCountChart'), {
+        type: 'pie',
+        data: {
+            labels: wordCountByPopularity.map(item => `${item.MinPop} - ${item.MaxPop}`),
+            datasets: [{
+                label: 'Số từ',
+                data: wordCountByPopularity.map(item => item.WordCount),
+                hoverOffset: 4
+            }]
+        }, options: {
+            colors: {
+                enabled: true,
+                forceOverride: true
+            }
+        }
+    });
+    const usedWordCountChart = new Chart(document.getElementById('usedWordCountChart'), {
+        type: 'pie',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            colors: {
+                enabled: true,
+                forceOverride: true
+            }
+        }
+    });
+    const matchCountChart = new Chart(document.getElementById('matchCountChart'), {
+        type: 'bar',
+        data: {
+            labels: [],
+            datasets: []
+        },
+        options: {
+            colors: {
+            enabled: true,
+            forceOverride: true
+        },
+        scales: {
+            x: {
+                stacked: true
+            },
+            y: {
+                stacked: true,
+                beginAtZero: true,
+                ticks: {
+                    precision: 0
+                }
+            }
+        }}
+    });
+    function displayMatchCountChart(type) {
+        switch (type) {
+            case 1: {
+                matchCountChart.data.labels = matchCountByDay.map(item => {
+                    let date = new Date(item.CountDate);
+                    let day = date.getDate().toString().padStart(2, '0');
+                    let month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    let year = date.getFullYear();
+                    return `${day}/${month}/${year}`;
+                });
+                matchCountChart.data.datasets = [{
+                    label: 'Đấu với bot',
+                    data: matchCountByDay.map(item => item.pve),
+                    borderWidth: 1
+                },
+                {
+                    label: 'Đấu với người',
+                    data: matchCountByDay.map(item => item.pvp),
+                    borderWidth: 1
+                }]
+                break;
+            }
+            case 2: {
+                matchCountChart.data.labels = matchCountByMonth.map(item => {
+                    let date = new Date(item.CountDate);
+                    let month = (date.getMonth() + 1).toString().padStart(2, '0');
+                    let year = date.getFullYear();
+                    return `${month}/${year}`;
+                });
+                matchCountChart.data.datasets = [{
+                    label: 'Đấu với bot',
+                    data: matchCountByMonth.map(item => item.pve),
+                    borderWidth: 1
+                },
+                {
+                    label: 'Đấu với người',
+                    data: matchCountByMonth.map(item => item.pvp),
+                    borderWidth: 1
+                }];
+                break;
+            }
+            case 3: {
+                matchCountChart.data.labels = matchCountByYear.map(item => {
+                    let date = new Date(item.CountDate);
+                    let year = date.getFullYear();
+                    return `${year}`;
+                });
+                matchCountChart.data.datasets = [{
+                    label: 'Đấu với bot',
+                    data: matchCountByYear.map(item => item.pve),
+                    borderWidth: 1
+                },
+                {
+                    label: 'Đấu với người',
+                    data: matchCountByYear.map(item => item.pvp),
+                    borderWidth: 1
+                }];
+                break;
+            }
+        }
+        matchCountChart.update();
+    }
+    function displayUsedWordCountChart(type) {
+        let data;
+        switch (type) {
+            case 1:
+                data = usedWordCountByPopularityIn7d;
+                break;
+            case 2:
+                data = usedWordCountByPopularityIn12m;
+                break;
+            case 3:
+                data = usedWordCountByPopularityIn5y;
+                break;
+        }
+        usedWordCountChart.data.labels = data.data.map(item => `${item.MinPop} - ${item.MaxPop}`);
+        usedWordCountChart.data.datasets = [{
+            label: 'Số từ đã dùng',
+            data: data.data.map(item => item.WordCount),
+            hoverOffset: 4
+        }];
+        usedWordCountChart.update();
+        let startingDate = new Date(data.startingDate);
+        let endingDate = new Date(data.endingDate);
+        usedWordCountByPopularityTimeRange.textContent = `(${startingDate.getDate().toString().padStart(2, '0')}/${(startingDate.getMonth() + 1).toString().padStart(2, '0')}/${startingDate.getFullYear()} - ${endingDate.getDate().toString().padStart(2, '0')}/${(endingDate.getMonth() + 1).toString().padStart(2, '0')}/${endingDate.getFullYear()})`;
+    }
+    displayMatchCountChart(1);
+    displayUsedWordCountChart(1);
+</script>
 <%- include('../partials/footer.ejs') %>

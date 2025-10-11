@@ -87,10 +87,237 @@ function dangXuat(req, res) {
 }
 
 async function toReport(req, res) {
-    res.render('report', {
-        title: 'Thống kê',
-        current: 'report'
-    });
+    if (!req.query.force) {
+        let cachedReport = cache.get('AnalyticReport');
+        if (cachedReport) {
+            return res.render('report', {
+                title: 'Thống kê',
+                current: 'report',
+                ...cachedReport
+            });
+        }
+    }
+    try {
+        let activeAccountCount = await Account.count({
+            where: { Status: 1 }
+        });
+        let wordCount = await Word.count();
+        let meaningCount = await WordMeaning.count();
+        let usedWordCount = await WordHistory.count();
+        let avgPopularity = (await db.query(`
+            SELECT AVG(Popularity) AveragePopularity
+            FROM WordHistory a JOIN Word b ON a.WordV = b.WordV
+        `, { type: db.QueryTypes.SELECT }))[0].AveragePopularity.toFixed(2);
+        let pveCount = await MatchHistory.count({
+            where: {
+                AID2: {
+                    [Op.is]: null
+                }
+            }
+        });
+        let pvpCount = Math.round((await MatchHistory.count({
+            where: {
+                AID2: {
+                    [Op.not]: null
+                }
+            }
+        })) / 2);
+        let pveCountByDays = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 DAY
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 6 DAY
+            ) SELECT DATE(d) CountDate, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON DATE(d) = DATE(MTime) AND AID2 IS null
+            GROUP BY CountDate
+            ORDER BY CountDate ASC
+        `, { type: db.QueryTypes.SELECT });
+        let pvpCountByDays = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 DAY
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 6 DAY
+            ) SELECT DATE(d) CountDate, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON DATE(d) = DATE(MTime) AND AID2 IS NOT null
+            GROUP BY CountDate
+            ORDER BY CountDate ASC
+        `, { type: db.QueryTypes.SELECT });
+        let matchCountByDay = [];
+        for (let i = 0; i < 7; i++) {
+            matchCountByDay.push({
+                CountDate: new Date(pveCountByDays[i].CountDate),
+                pve: pveCountByDays[i].MatchCount,
+                pvp: Math.round(pvpCountByDays[i].MatchCount / 2)
+            });
+        }
+        let pveCountByMonth = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 MONTH
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 11 MONTH
+            ) SELECT MONTH(d) CountMonth, YEAR(d) CountYear, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON MONTH(d) = MONTH(MTime) AND YEAR(d) = YEAR(MTime) AND AID2 IS null
+            GROUP BY CountYear, CountMonth
+            ORDER BY CountYear ASC, CountMonth ASC
+        `, { type: db.QueryTypes.SELECT });
+        let pvpCountByMonth = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 MONTH
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 11 MONTH
+            ) SELECT MONTH(d) CountMonth, YEAR(d) CountYear, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON MONTH(d) = MONTH(MTime) AND YEAR(d) = YEAR(MTime) AND AID2 IS NOT null
+            GROUP BY CountYear, CountMonth
+            ORDER BY CountYear ASC, CountMonth ASC
+        `, { type: db.QueryTypes.SELECT });
+        let matchCountByMonth = [];
+        for (let i = 0; i < 12; i++) {
+            matchCountByMonth.push({
+                CountDate: new Date(pveCountByMonth[i].CountYear, pveCountByMonth[i].CountMonth - 1, 1),
+                pve: pveCountByMonth[i].MatchCount,
+                pvp: Math.round(pvpCountByMonth[i].MatchCount / 2)
+            });
+        }
+        let pveCountByYear = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 YEAR
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 4 YEAR
+            ) SELECT YEAR(d) CountYear, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON YEAR(d) = YEAR(MTime) AND AID2 IS null
+            GROUP BY CountYear
+            ORDER BY CountYear ASC
+        `, { type: db.QueryTypes.SELECT });
+        let pvpCountByYear = await db.query(`
+            WITH RECURSIVE Days AS (
+                SELECT CURDATE() d
+                UNION ALL
+                SELECT d - INTERVAL 1 YEAR
+                FROM Days
+                WHERE d > CURDATE() - INTERVAL 4 YEAR
+            ) SELECT YEAR(d) CountYear, Count(MID) MatchCount
+            FROM Days LEFT JOIN MatchHistory ON YEAR(d) = YEAR(MTime) AND AID2 IS NOT null
+            GROUP BY CountYear
+            ORDER BY CountYear ASC
+        `, { type: db.QueryTypes.SELECT });
+        let matchCountByYear = [];
+        for (let i = 0; i < 5; i++) {
+            matchCountByYear.push({
+                CountDate: new Date(pveCountByYear[i].CountYear, 0, 1),
+                pve: pveCountByYear[i].MatchCount,
+                pvp: Math.round(pvpCountByYear[i].MatchCount / 2)
+            });
+        }
+        let wordCountByPopularity = await db.query(`
+            WITH RECURSIVE PopRange AS
+            (
+                SELECT 1 RangeIndex, 1.00 MinPop, 2.60 MaxPop
+                UNION ALL
+                SELECT (RangeIndex + 1), MaxPop + 0.01, MaxPop + 1.60
+                FROM PopRange
+                WHERE MaxPop <= 7.40
+            ) SELECT MinPop, MaxPop, COUNT(WordV) WordCount
+            FROM Word
+            RIGHT JOIN PopRange ON Popularity BETWEEN MinPop - 0.0001 AND MaxPop + 0.0001
+            GROUP BY RangeIndex
+        `, { type: db.QueryTypes.SELECT });
+        let usedWordCountByPopularityIn7d = await db.query(`
+            WITH RECURSIVE PopRange AS
+            (
+                SELECT 1 RangeIndex, 1.00 MinPop, 2.60 MaxPop
+                UNION ALL
+                SELECT (RangeIndex + 1), MaxPop + 0.01, MaxPop + 1.60
+                FROM PopRange
+                WHERE MaxPop <= 7.40
+            ) SELECT MinPop, MaxPop, COUNT(WHID) WordCount
+            FROM WordHistory
+            JOIN Word ON WordHistory.WordV = Word.WordV AND DATE(UseTime) >= CURDATE() - INTERVAL 6 DAY
+            RIGHT JOIN PopRange ON Popularity BETWEEN (MinPop - 0.0001) AND (MaxPop + 0.0001)
+            GROUP BY RangeIndex
+        `, { type: db.QueryTypes.SELECT });
+        usedWordCountByPopularityIn7d = {
+            data: usedWordCountByPopularityIn7d,
+            startingDate: new Date(Date.now() - 518400000),
+            endingDate: new Date()
+        };
+        let usedWordCountByPopularityIn12m = await db.query(`
+            WITH RECURSIVE PopRange AS
+            (
+                SELECT 1 RangeIndex, 1.00 MinPop, 2.60 MaxPop
+                UNION ALL
+                SELECT (RangeIndex + 1), MaxPop + 0.01, MaxPop + 1.60
+                FROM PopRange
+                WHERE MaxPop <= 7.40
+            ) SELECT MinPop, MaxPop, COUNT(WHID) WordCount
+            FROM WordHistory
+            JOIN Word ON WordHistory.WordV = Word.WordV AND DATE(UseTime) >= DATE_FORMAT(CURDATE() - INTERVAL 11 MONTH, '%Y-%m-01')
+            RIGHT JOIN PopRange ON Popularity BETWEEN (MinPop - 0.0001) AND (MaxPop + 0.0001)
+            GROUP BY RangeIndex
+        `, { type: db.QueryTypes.SELECT });
+        usedWordCountByPopularityIn12m = {
+            data: usedWordCountByPopularityIn12m,
+            startingDate: new Date((new Date()).setMonth((new Date()).getMonth() - 11, 1)),
+            endingDate: new Date()
+        };
+        let usedWordCountByPopularityIn5y = await db.query(`
+            WITH RECURSIVE PopRange AS
+            (
+                SELECT 1 RangeIndex, 1.00 MinPop, 2.60 MaxPop
+                UNION ALL
+                SELECT (RangeIndex + 1), MaxPop + 0.01, MaxPop + 1.60
+                FROM PopRange
+                WHERE MaxPop <= 7.40
+            ) SELECT MinPop, MaxPop, COUNT(WHID) WordCount
+            FROM WordHistory
+            JOIN Word ON WordHistory.WordV = Word.WordV AND YEAR(UseTime) >= YEAR(CURDATE() - INTERVAL 4 YEAR)
+            RIGHT JOIN PopRange ON Popularity BETWEEN (MinPop - 0.0001) AND (MaxPop + 0.0001)
+            GROUP BY RangeIndex
+        `, { type: db.QueryTypes.SELECT });
+        usedWordCountByPopularityIn5y = {
+            data: usedWordCountByPopularityIn5y,
+            startingDate: new Date((new Date()).setFullYear((new Date()).getFullYear() - 4, 0, 1)),
+            endingDate: new Date()
+        };
+        let report = {
+            reportTime: new Date(),
+            activeAccountCount: activeAccountCount,
+            wordCount: wordCount,
+            meaningCount: meaningCount,
+            usedWordCount: usedWordCount,
+            avgPopularity: avgPopularity,
+            pveCount: pveCount,
+            pvpCount: pvpCount,
+            matchCountByDay: matchCountByDay,
+            matchCountByMonth: matchCountByMonth,
+            matchCountByYear: matchCountByYear,
+            wordCountByPopularity: wordCountByPopularity,
+            usedWordCountByPopularityIn7d: usedWordCountByPopularityIn7d,
+            usedWordCountByPopularityIn12m: usedWordCountByPopularityIn12m,
+            usedWordCountByPopularityIn5y: usedWordCountByPopularityIn5y
+        };
+        cache.set('AnalyticReport', report, 300);
+        if (req.query.force) {
+            return res.redirect('/admin/toReport');
+        }
+        return res.render('report', {
+            title: 'Thống kê',
+            current: 'report',
+            ...report
+        });
+    } catch (error) {
+        console.log('Lỗi khi lấy dữ liệu thống kê', error);
+        return res.status(500).send('Lỗi hệ thống, vui lòng thử lại sau');
+    }
 }
 
 async function toAccount(req, res) {
@@ -282,7 +509,7 @@ async function addWord(req, res) {
     }
     let newWord = new Word({
         WordV: wordV,
-        Popularity: popularity
+        Popularity: popularity.toFixed(2)
     });
     try {
         await newWord.save();
@@ -390,7 +617,7 @@ async function editWord(req, res) {
     if (!word) {
         return res.redirect('/admin/toWord');
     }
-    word.Popularity = popularity;
+    word.Popularity = popularity.toFixed(2);
     try {
         await word.save();
     } catch (error) {
