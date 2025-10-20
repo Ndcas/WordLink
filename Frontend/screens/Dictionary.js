@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, FlatList, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CommonActions } from '@react-navigation/native';
 import { Audio } from "expo-av";
 import { get, post } from '../utils/requestWrapper';
 import { deletLogiInformation } from "../utils/deleteLoginInformation";
@@ -85,7 +85,7 @@ const Dictionary = ({ route }) => {
     const getWordInformation = async (word) => {
         try {
             let res = await fetch(`${API_URL}/word/getWordInformation?word=${encodeURIComponent(word)}`);
-            switch (infoRes.status) {
+            switch (res.status) {
                 case 400:
                     Alert.alert("Error", "Please enter a word.");
                     return;

@@ -8,9 +8,8 @@ import {
   ScrollView
 } from "react-native";
 import { get } from "../utils/requestWrapper";
-import { useFocusEffect, CommonActions } from "@react-navigation/native";
+import { useFocusEffect, CommonActions, useNavigation } from "@react-navigation/native";
 import { useCallback, useState } from "react";
-import { useNavigation } from "@react-navigation/native";
 
 export default function BookmarkScreen() {
   const [bookmarks, setBookmarks] = useState([]);

@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRoute, useNavigation } from '@react-navigation/native';
+import { useRoute, useNavigation, CommonActions } from '@react-navigation/native';
 import { get } from 'react-native/Libraries/TurboModule/TurboModuleRegistry';
 import { getAvatarList, getAvatarImage } from '../utils/getAvatarImage';
 import { post } from '../utils/requestWrapper';

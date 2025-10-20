@@ -2,9 +2,8 @@ import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ActivityIndicator, Alert, TouchableOpacity, ScrollView } from "react-native";
 import { Image } from 'expo-image';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import checkAndRefreshAccessToken from "../utils/checkAndRefreshAccessToken";
 import { getAvatarImage } from "../utils/getAvatarImage";
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, CommonActions } from '@react-navigation/native';
 import { get, post } from '../utils/requestWrapper';
 
 export default function AccountInfoScreen() {
@@ -45,13 +44,8 @@ export default function AccountInfoScreen() {
           throw new Error("Can't fetch account information");
         }
         setAccount(await res.json());
-        res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/getAnalyticReport`, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
+        
+        res = await get("/account/getAnalyticReport", {}, 'access');
         if (!res.ok) {
           throw new Error("Can't fetch analytic information");
         }
