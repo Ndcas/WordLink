@@ -35,11 +35,13 @@ export default function MultiplayerScreen() {
   const timerRef = useRef(null);
   const [resultModal, setResultModal] = useState(null);
   const [playerAvatar, setPlayerAvatar] = useState("default.png");
+  const expectedDisconnect = useRef(false);
+  const isFirst = useRef(true);
 
   useEffect(() => {
     const init = async () => {
       const refreshToken = await AsyncStorage.getItem("refreshToken");
-      const avatarImage = (await AsyncStorage.getItem("avatarImage")) || "default.png";
+      const avatarImage = global.avatarImage|| "default.png";
       setPlayerAvatar(avatarImage);
 
       const socket = io(API_URL, { transports: ["websocket"], autoConnect: false });
@@ -80,6 +82,7 @@ export default function MultiplayerScreen() {
 
       // 🔹 Khi đến lượt người chơi
       socket.on("your turn", (data) => {
+        isFirst.current = data.usedWords.length % 2 == 0; 
         setIsMyTurn(true);
         setCurrentWord(data?.currentWord || null);
         setUsedWords(data?.usedWords || []);
@@ -104,7 +107,7 @@ export default function MultiplayerScreen() {
       // 🔹 Kết quả trận đấu
       socket.on("match result", (data) => {
         stopTimer();
-        setInMatch(false);
+        setInMatch(true);
         setIsMyTurn(false);
 
         setResultModal({
@@ -113,8 +116,17 @@ export default function MultiplayerScreen() {
             }\nScore: ${data.score} (+${data.scoreD})`,
           newWords: data.newWords,
         });
+      });
 
-        socket.disconnect();
+      socket.on("expected disconnection", () => {
+        expectedDisconnect.current = true;
+      });
+
+      socket.on("disconnect", () => {
+        if (!expectedDisconnect.current) {
+          Alert.alert("Disconnected", "You have been disconnected from the server.");
+          navigation.goBack();
+        }
       });
 
       socket.connect();
@@ -192,9 +204,15 @@ export default function MultiplayerScreen() {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <Image source={getAvatarImage(avatar)} style={styles.avatar} />
+        <Image source={getAvatarImage(playerAvatar)} style={styles.avatar} />
+        <View>
+          <Text style={{color: "#F3C623"}}>{global.username}</Text>
+        </View>
         <View style={styles.timerBox}>
           <Text style={styles.timerText}>{timer}s</Text>
+        </View>
+        <View>
+          <Text style={{color: "#10375C"}}>{opponent.username}</Text>
         </View>
         <Image source={getAvatarImage(opponent.avatarImage)} style={styles.avatar} />
       </View>
@@ -202,11 +220,11 @@ export default function MultiplayerScreen() {
       {/* Chat bubbles */}
       <ScrollView style={styles.chatContainer} contentContainerStyle={{ paddingBottom: 10 }}>
         {usedWords.map((w, i) => {
-          const isPlayer = i % 2 === 0;
+          const isPlayer = (i + (isFirst.current ? 0 : 1)) % 2 === 0;
           return (
             <View
               key={i}
-              style={[styles.bubble, isPlayer ? styles.playerBubble : styles.botBubble]}
+              style={[styles.bubble, isPlayer ? styles.botBubble : styles.playerBubble]}
             >
               <Text style={styles.bubbleText}>{w}</Text>
             </View>

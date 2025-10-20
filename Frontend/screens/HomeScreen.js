@@ -20,8 +20,6 @@ export default function HomeScreen() {
         const loadUserInfo = async () => {
             try {
                 const accessToken = await AsyncStorage.getItem("accessToken");
-                const storedUsername = await AsyncStorage.getItem("username");
-                if (storedUsername) setUsername(storedUsername);
 
                 if (!accessToken) {
                     setLoading(false);
@@ -50,8 +48,12 @@ export default function HomeScreen() {
                 if (infoRes.ok) {
                     const infoData = await infoRes.json();
                     setUsername(infoData.Username || "Guest");
+                    global.username = infoData.Username;
                     setScore(infoData.Score || 0);
-                    if (infoData.AvatarImage) setAvatar(infoData.AvatarImage);
+                    if (infoData.AvatarImage) {
+                        setAvatar(infoData.AvatarImage);
+                        global.avatarImage = infoData.AvatarImage || "default.png";
+                    }
                 }
 
                 // Lấy xếp hạng
@@ -112,8 +114,8 @@ export default function HomeScreen() {
                 <View style={styles.rankItem}>
                     <FontAwesome5 name="crown" size={33} color="#F3C623" style={[styles.rankIcon]} />
                     <View style={styles.rankTextGroup}>
-                        <Text style={[styles.rankLabel, ]}>RANK</Text>
-                        <Text style={[styles.rankValue, ]}>{rank !== null ? rank : '-'}</Text>
+                        <Text style={[styles.rankLabel,]}>RANK</Text>
+                        <Text style={[styles.rankValue,]}>{rank !== null ? rank : '-'}</Text>
                     </View>
                 </View>
 

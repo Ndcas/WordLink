@@ -80,7 +80,7 @@ const ForgotPasswordScreen = ({ navigation }) => {
 
             switch (res.status) {
                 case 400:
-                    Alert.alert("Error", "Invalid email.");
+                    Alert.alert("Error", "Invalid credenntials.");
                     return;
                 case 404:
                     Alert.alert("Error", "Account not found.");

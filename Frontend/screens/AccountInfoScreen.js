@@ -113,10 +113,10 @@ export default function AccountInfoScreen() {
           <Text style={[styles.info, { fontWeight: "bold" }]}>Match played:
             <Text style={{ fontWeight: "normal" }}> {analytic.numOfMatchesPlayed}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Match won:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>PvP match won:
             <Text style={{ fontWeight: "normal" }}> {analytic.pvpWin}</Text>
           </Text>
-          <Text style={[styles.info, { fontWeight: "bold" }]}>Match lost:
+          <Text style={[styles.info, { fontWeight: "bold" }]}>PvP match lost:
             <Text style={{ fontWeight: "normal" }}> {analytic.pvpLose}</Text>
           </Text>
           <Text style={[styles.info, { fontWeight: "bold" }]}>Words used:

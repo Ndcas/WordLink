@@ -16,7 +16,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function PlayWithBotScreen({ navigation }) {
   const API_URL = process.env.EXPO_PUBLIC_API_URL;
-  const [socket, setSocket] = useState(null);
+  const socket = useRef(null);
   const [currentWord, setCurrentWord] = useState(null);
   const [usedWords, setUsedWords] = useState([]);
   const [inputWord, setInputWord] = useState("");
@@ -24,6 +24,7 @@ export default function PlayWithBotScreen({ navigation }) {
   const [timer, setTimer] = useState(30);
   const timerRef = useRef(null);
   const [resultModal, setResultModal] = useState(null);
+  const expectedDisconnect = useRef(false);
 
   useEffect(() => {
     const initSocket = async () => {
@@ -40,6 +41,8 @@ export default function PlayWithBotScreen({ navigation }) {
 
       // 🟢 Khi đến lượt người chơi
       newSocket.on("your turn", (data) => {
+        console.log("my turn");
+
         setIsMyTurn(true);
         setCurrentWord(data.currentWord);
         setUsedWords(data.usedWords);
@@ -48,6 +51,8 @@ export default function PlayWithBotScreen({ navigation }) {
 
       // 🔵 Khi bot phản hồi
       newSocket.on("bot turn", (data) => {
+        console.log("bot turn");
+
         setIsMyTurn(false);
         setCurrentWord(data.currentWord);
         setUsedWords(data.usedWords);
@@ -55,22 +60,32 @@ export default function PlayWithBotScreen({ navigation }) {
       });
 
       newSocket.on("invalid word", () => {
-        Alert.alert("❌ Invalid word!");
+        Alert.alert("❌ Invalid word!", "This word is invalid, please try again!");
       });
 
       newSocket.on("match result", (data) => {
         stopTimer();
         setResultModal({
           title: "🏆 Result",
-          message: `${data.result === 1 ? "You've won 🎉" : "You've lost 😢"}\Point: ${
-            data.score
-          } (+${data.scoreD})`,
+          message: `${data.result === 1 ? "You've won 🎉" : "You've lost 😢"}\Point: ${data.score
+            } (+${data.scoreD})`,
           newWords: data.newWords,
         });
-        newSocket.disconnect();
       });
 
-      setSocket(newSocket);
+      newSocket.on("expected disconnection", () => {
+        expectedDisconnect.current = true;
+        console.log(expectedDisconnect.current);
+      });
+
+      newSocket.on("disconnect", () => {
+        if (!expectedDisconnect.current) {
+          Alert.alert("Disconnected", "You have been disconnected from the server.");
+          navigation.goBack();
+        }
+      });
+
+      socket.current = newSocket;
       return () => newSocket.disconnect();
     };
 
@@ -85,7 +100,7 @@ export default function PlayWithBotScreen({ navigation }) {
       setTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          if (socket && isMyTurn) socket.emit("bot win");
+          if (socket.current && isMyTurn) socket.current.emit("bot win");
           return 0;
         }
         return prev - 1;
@@ -99,7 +114,13 @@ export default function PlayWithBotScreen({ navigation }) {
 
   // 📝 Gửi từ
   const handleSendWord = () => {
-    if (!inputWord.trim() || !socket) return;
+    console.log(1);
+    
+    if (!inputWord.trim() || !socket.current){
+      Alert.alert("Error", "Please enter a word!");
+      return;
+    } 
+    console.log(inputWord);
 
     if (currentWord && inputWord[0] !== currentWord[currentWord.length - 1]) {
       Alert.alert("❌ Invalid word", "The first character must match the last character of the last word!");
@@ -111,7 +132,7 @@ export default function PlayWithBotScreen({ navigation }) {
       return;
     }
 
-    socket.emit("send word to bot", inputWord.trim());
+    socket.current.emit("send word to bot", inputWord.trim());
     setInputWord("");
     setIsMyTurn(false);
     stopTimer();
@@ -119,7 +140,7 @@ export default function PlayWithBotScreen({ navigation }) {
 
   // 🛑 Người chơi đầu hàng
   const handleBotWin = () => {
-    if (socket) socket.emit("bot win");
+    if (socket.current) socket.current.emit("bot win");
     stopTimer();
   };
 

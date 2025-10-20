@@ -103,7 +103,7 @@ const ChooseAvatarScreen = () => {
           </View>
 
           <TouchableOpacity style={styles.completeButton} onPress={handleComplete}>
-            <Text style={styles.completeButtonText}>COMPLETE 2/2</Text>
+            <Text style={styles.completeButtonText}>COMPLETE</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

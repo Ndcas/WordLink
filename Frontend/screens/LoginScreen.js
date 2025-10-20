@@ -19,15 +19,6 @@ const LoginScreen = () => {
   useEffect(() => {
     (async () => {
       if ((await AsyncStorage.getItem('rememberMe')) == "1") {
-        // let refreshToken = await AsyncStorage.getItem("refreshToken");
-
-        // let res = await fetch(`${process.env.EXPO_PUBLIC_API_URL}/account/quickLogIn`, {
-        //   method: "POST",
-        //   headers: {
-        //     Authorization: `Bearer ${refreshToken}`,
-        //     "Content-Type": "application/json"
-        //   },
-        // });
         try {
           let res = await post('/account/quickLogIn', {}, 'refresh');
           if (res.ok) {
@@ -38,7 +29,7 @@ const LoginScreen = () => {
             navigation.replace('MainTabs');
           }
         } catch (error) {
-          console.error('Quick login error:', error);
+          console.log('Quick login error:', error);
         }
       }
     })();
