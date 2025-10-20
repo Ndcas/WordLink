@@ -37,35 +37,9 @@ export default function MultiplayerScreen() {
   const [playerAvatar, setPlayerAvatar] = useState("default.png");
 
   useEffect(() => {
-    (async () => {
-      let infoRes = await get("/account/getAccountInfo", {}, 'access');
-      switch (infoRes.status) {
-        case 401:
-          Alert.alert("Error", "Unauthorized, please log in again.");
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [{ name: "LoginScreen" }],
-            })
-          );
-          return;
-        case 429:
-          Alert.alert("Error", "Too many requests, please wait and try again.");
-          return;
-        case 500:
-          Alert.alert("Error", "Server error.");
-          return;
-      }
-      if (infoRes.ok) {
-        const infoData = await infoRes.json();
-        if (infoData.AvatarImage) setAvatar(infoData.AvatarImage);
-      }
-    })();
-
     const init = async () => {
       const refreshToken = await AsyncStorage.getItem("refreshToken");
-      const avatarImage =
-        (await AsyncStorage.getItem("avatarImage")) || "default.png";
+      const avatarImage = (await AsyncStorage.getItem("avatarImage")) || "default.png";
       setPlayerAvatar(avatarImage);
 
       const socket = io(API_URL, { transports: ["websocket"], autoConnect: false });
@@ -109,7 +83,6 @@ export default function MultiplayerScreen() {
         setIsMyTurn(true);
         setCurrentWord(data?.currentWord || null);
         setUsedWords(data?.usedWords || []);
-        setStatus("Your turn!");
         resetTimer();
       });
 
@@ -141,11 +114,7 @@ export default function MultiplayerScreen() {
           newWords: data.newWords,
         });
 
-        // ✅ Ngắt socket để không tự reconnect
-        if (socketRef.current) {
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
+        socket.disconnect();
       });
 
       socket.connect();
@@ -158,13 +127,12 @@ export default function MultiplayerScreen() {
     };
   }, []);
 
-  // ---------------- TIMER HANDLING ----------------
   function resetTimer() {
     clearInterval(timerRef.current);
     setTimer(30);
     timerRef.current = setInterval(() => {
       setTimer((prev) => {
-        if (prev <= 1) {
+        if (prev == 0) {
           clearInterval(timerRef.current);
           if (socketRef.current && isMyTurn) {
             Alert.alert("⏰ Time out!", "You've ran out of time.");
@@ -281,14 +249,7 @@ export default function MultiplayerScreen() {
               style={styles.closeBtn}
               onPress={() => {
                 setResultModal(null);
-                navigation.dispatch(
-                  CommonActions.reset({
-                    index: 0,
-                    routes: [
-                      { name: 'Home' },
-                    ],
-                  })
-                );
+                navigation.goBack();
               }}
             >
               <Text style={styles.closeBtnText}>OK</Text>
