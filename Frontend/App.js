@@ -2,6 +2,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { MusicProvider } from './context/MusicContext';
 import HomeScreen from './screens/HomeScreen';
 import Leaderboard from './screens/LeaderBoard';
 import LoginScreen from './screens/LoginScreen';
@@ -67,23 +68,25 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {/* Auth Screens */}
-        <Stack.Screen name="LoginScreen" component={LoginScreen} />
-        <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
-        <Stack.Screen name="NicknameScreen" component={NicknameScreen} />
-        <Stack.Screen name="ChooseAvatarScreen" component={ChooseAvatarScreen} />
-        <Stack.Screen name="AccountInfoScreen" component={AccountInfoScreen} />
-        <Stack.Screen name="PlayWithBotScreen" component={PlayWithBotScreen} />
-        <Stack.Screen name="MultiplayerScreen" component={MultiplayerScreen} />
-        <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
-        <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} />
-        <Stack.Screen name="BookmarkScreen" component={BookmarkScreen} />
+    <MusicProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          {/* Auth Screens */}
+          <Stack.Screen name="LoginScreen" component={LoginScreen} />
+          <Stack.Screen name="SignUpScreen" component={SignUpScreen} />
+          <Stack.Screen name="NicknameScreen" component={NicknameScreen} />
+          <Stack.Screen name="ChooseAvatarScreen" component={ChooseAvatarScreen} />
+          <Stack.Screen name="AccountInfoScreen" component={AccountInfoScreen} />
+          <Stack.Screen name="PlayWithBotScreen" component={PlayWithBotScreen} />
+          <Stack.Screen name="MultiplayerScreen" component={MultiplayerScreen} />
+          <Stack.Screen name="ForgotPasswordScreen" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen} />
+          <Stack.Screen name="BookmarkScreen" component={BookmarkScreen} />
 
-        {/* Main App (có Tab Navigator) */}
-        <Stack.Screen name="MainTabs" component={MainTabs} />
-      </Stack.Navigator>
-    </NavigationContainer>
+          {/* Main App (có Tab Navigator) */}
+          <Stack.Screen name="MainTabs" component={MainTabs} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </MusicProvider>
   );
 }

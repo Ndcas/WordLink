@@ -1,11 +1,12 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useContext } from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
-import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getAvatarImage } from '../utils/getAvatarImage';
 import { get } from '../utils/requestWrapper';
+import { MusicContext } from '../context/MusicContext';
 
 export default function HomeScreen() {
 
@@ -15,6 +16,19 @@ export default function HomeScreen() {
     const [score, setScore] = useState(0);
     const [rank, setRank] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const { sound } = useContext(MusicContext);
+    const [musicStatus, setMusicStatus] = useState(false);
+
+    const toggleMusic = async () => {
+        const status = await sound.getStatusAsync();
+        setMusicStatus(status.isPlaying);
+        if (status.isPlaying) {
+            await sound.pauseAsync();
+        } else {
+            await sound.playAsync();
+        }
+    };
 
     useFocusEffect(useCallback(() => {
         const loadUserInfo = async () => {
@@ -141,15 +155,26 @@ export default function HomeScreen() {
                 <FontAwesome5 name="crosshairs" size={25} color="#F3C623" />
                 <Text style={styles.menuText}>MULTIPLAYER</Text>
             </TouchableOpacity>
+
+            <TouchableOpacity onPress={() => toggleMusic()} style={styles.musicButton}>
+                {
+                !musicStatus ?
+                    <FontAwesome5 name="volume-up" size={28} color="#fff" />
+                    :
+                    <FontAwesome5 name="volume-mute" size={28} color="#fff" />
+                }
+            </TouchableOpacity>
         </SafeAreaView>
+
     );
 }
 
 const styles = StyleSheet.create({
     container: {
+        height: '100%',
         padding: 20,
         backgroundColor: '#fffff',
-        justifyContent: 'center'
+        justifyContent: 'flex-start'
     },
     header: {
         flexDirection: 'row',
@@ -245,5 +270,18 @@ const styles = StyleSheet.create({
         fontFamily: 'Bungee',
         textAlign: 'center',
         marginTop: 30
+    },
+    musicButton: {
+        position: 'absolute',
+        bottom: 20,        // cách mép dưới 20px
+        left: 20,          // cách mép trái 20px
+        backgroundColor: '#10375C',
+        padding: 12,
+        borderRadius: 30,
+        elevation: 6,      // bóng trên Android
+        shadowColor: '#000',
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 2 },
     },
 });
