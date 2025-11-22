@@ -1,5 +1,5 @@
 import React, { useCallback, useContext } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation, CommonActions } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { getAvatarImage } from '../utils/getAvatarImage';
 import { get } from '../utils/requestWrapper';
 import { MusicContext } from '../context/MusicContext';
+
 
 export default function HomeScreen() {
 
@@ -94,7 +95,10 @@ export default function HomeScreen() {
                     setRank(rankData.rank || null);
                 }
             } catch (err) {
-                console.error("Lỗi lấy thông tin hoặc xếp hạng tài khoản:", err);
+                await AsyncStorage.removeItem('accessToken');
+                await AsyncStorage.removeItem('username');
+                await AsyncStorage.removeItem('refreshToken');
+                navigation.replace('LoginScreen');
             } finally {
                 setLoading(false);
             }
@@ -158,10 +162,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity onPress={() => toggleMusic()} style={styles.musicButton}>
                 {
-                !musicStatus ?
-                    <FontAwesome5 name="volume-up" size={28} color="#fff" />
-                    :
-                    <FontAwesome5 name="volume-mute" size={28} color="#fff" />
+                    !musicStatus ?
+                        <FontAwesome5 name="volume-up" size={28} color="#fff" />
+                        :
+                        <FontAwesome5 name="volume-mute" size={28} color="#fff" />
                 }
             </TouchableOpacity>
         </SafeAreaView>

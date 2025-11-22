@@ -16,7 +16,6 @@ import io from "socket.io-client";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { CommonActions, useNavigation } from "@react-navigation/native";
 import { getAvatarImage } from '../utils/getAvatarImage';
-import { get } from '../utils/requestWrapper';
 
 export default function MultiplayerScreen() {
   const API_URL = process.env.EXPO_PUBLIC_API_URL;

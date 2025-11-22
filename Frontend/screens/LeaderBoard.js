@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TextInput, TouchableOpacity, FlatList, SafeAreaView, ActivityIndicator } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 const LeaderboardScreen = () => {
     const navigation = useNavigation();
@@ -32,18 +32,18 @@ const LeaderboardScreen = () => {
                 setAllData(data);
                 setVisibleData(data.slice(0, limit));
             } else {
-                console.error("Lỗi server:", res.status);
+                console.log("Lỗi server:", res.status);
             }
         } catch (err) {
-            console.error("Fetch lỗi:", err);
+            console.log("Fetch lỗi:", err);
         } finally {
             setLoading(false);
         }
     }
 
-    useEffect(() => {
+    useFocusEffect(useCallback(() => {
         getLeaderboard();
-    }, []);
+    }, []));
 
     // cập nhật data hiển thị mỗi khi đổi trang hoặc search
     useEffect(() => {

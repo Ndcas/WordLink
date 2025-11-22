@@ -56,7 +56,7 @@ const LoginScreen = () => {
           Alert.alert("Error", "Invalid username or email.");
           return;
         case 403:
-          Alert.alert("Error", "This account as been baned.");
+          Alert.alert("Error", "This account has been banned.");
           return;
         case 429:
           Alert.alert("Error", "Too many requests, please wait and try again.");
@@ -79,7 +79,7 @@ const LoginScreen = () => {
       // Chuyển sang Home (hoặc màn chính của app)
       navigation.replace('MainTabs');
     } catch (err) {
-      console.error('Login error:', err);
+      console.log('Login error:', err);
       Alert.alert('Login error', 'Something went wrong during login.');
     } finally {
       setLoading(false);

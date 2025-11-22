@@ -54,6 +54,10 @@ export default function BookmarkScreen() {
       setBookmarks(data);
     } catch (error) {
       Alert.alert("Error", "Cannot connect to server.");
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('username');
+      await AsyncStorage.removeItem('refreshToken');
+      navigation.replace('LoginScreen');
     } finally {
       setLoading(false);
     }

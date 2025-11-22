@@ -44,7 +44,7 @@ export default function AccountInfoScreen() {
           throw new Error("Can't fetch account information");
         }
         setAccount(await res.json());
-        
+
         res = await get("/account/getAnalyticReport", {}, 'access');
         if (!res.ok) {
           throw new Error("Can't fetch analytic information");
@@ -55,6 +55,10 @@ export default function AccountInfoScreen() {
       } catch (error) {
         console.error("Lỗi khi lấy thông tin tài khoản:", error);
         Alert.alert("Error", "Can't fetch account infromation.");
+        await AsyncStorage.removeItem('accessToken');
+        await AsyncStorage.removeItem('username');
+        await AsyncStorage.removeItem('refreshToken');
+        navigation.replace('LoginScreen');
       } finally {
         setLoading(false);
       }

@@ -246,6 +246,9 @@ async function getAccountRank(req, res) {
             replacements: { AID: AID },
             type: QueryTypes.SELECT
         });
+        if (account.length == 0) {
+            return res.status(401).json({ error: 'Không tìm thấy tài khoản' });
+        }
         return res.status(200).json({
             rank: account[0].Rank
         });

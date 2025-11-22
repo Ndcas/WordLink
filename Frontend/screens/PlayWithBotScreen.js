@@ -41,8 +41,6 @@ export default function PlayWithBotScreen({ navigation }) {
 
       // 🟢 Khi đến lượt người chơi
       newSocket.on("your turn", (data) => {
-        console.log("my turn");
-
         setIsMyTurn(true);
         setCurrentWord(data.currentWord);
         setUsedWords(data.usedWords);
@@ -51,8 +49,6 @@ export default function PlayWithBotScreen({ navigation }) {
 
       // 🔵 Khi bot phản hồi
       newSocket.on("bot turn", (data) => {
-        console.log("bot turn");
-
         setIsMyTurn(false);
         setCurrentWord(data.currentWord);
         setUsedWords(data.usedWords);
@@ -114,13 +110,10 @@ export default function PlayWithBotScreen({ navigation }) {
 
   // 📝 Gửi từ
   const handleSendWord = () => {
-    console.log(1);
-    
     if (!inputWord.trim() || !socket.current){
       Alert.alert("Error", "Please enter a word!");
       return;
     } 
-    console.log(inputWord);
 
     if (currentWord && inputWord[0] !== currentWord[currentWord.length - 1]) {
       Alert.alert("❌ Invalid word", "The first character must match the last character of the last word!");

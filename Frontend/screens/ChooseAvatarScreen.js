@@ -18,8 +18,7 @@ import { post } from '../utils/requestWrapper';
 const { width } = Dimensions.get('window');
 
 // Map avatar images với key string (sẽ gửi lên server)
-const avatars = getAvatarList();;
-console.log(avatars);
+const avatars = getAvatarList();
 
 const ChooseAvatarScreen = () => {
   const route = useRoute();
@@ -65,12 +64,16 @@ const ChooseAvatarScreen = () => {
       if (res.ok) {
         Alert.alert('Success', 'Profile successfully updated!');
         navigation.navigate("MainTabs", {
-                screen: "Home",
-              });
+          screen: "Home",
+        });
       }
     } catch (error) {
-      console.error(error);
+      console.log(error);
       Alert.alert('Error', "Can't connect to the server.");
+      await AsyncStorage.removeItem('accessToken');
+      await AsyncStorage.removeItem('username');
+      await AsyncStorage.removeItem('refreshToken');
+      navigation.replace('LoginScreen');
     }
   };
 

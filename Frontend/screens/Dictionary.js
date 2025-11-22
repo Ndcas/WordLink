@@ -61,10 +61,10 @@ const Dictionary = ({ route }) => {
                 const data = await res.json();
                 setSuggestions(data);
             } else {
-                console.error('Lỗi server:', res.status);
+                console.log('Lỗi server:', res.status);
             }
         } catch (err) {
-            console.error('Fetch lỗi:', err);
+            console.log('Fetch lỗi:', err);
         } finally {
             setLoading(false);
         }
@@ -149,8 +149,12 @@ const Dictionary = ({ route }) => {
             const isBookmarkedTemp = await res.json();
             setIsBookmarked(isBookmarkedTemp.bookmarked);
         } catch (err) {
-            console.error('Fetch lỗi:', err);
+            console.log('Fetch lỗi:', err);
             setWordDetail(null);
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('username');
+            await AsyncStorage.removeItem('refreshToken');
+            navigation.replace('LoginScreen');
         }
     };
 
@@ -252,6 +256,10 @@ const Dictionary = ({ route }) => {
 
         } catch (error) {
             Alert.alert("Error", "Cannot connect to server.");
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('username');
+            await AsyncStorage.removeItem('refreshToken');
+            navigation.replace('LoginScreen');
             return;
         }
     }

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { get, post } from '../utils/requestWrapper';
+import { post } from '../utils/requestWrapper';
 import { CommonActions } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
@@ -76,6 +76,10 @@ const SignUpScreen = ({ navigation }) => {
             }
         } catch (err) {
             Alert.alert("Error", err);
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('username');
+            await AsyncStorage.removeItem('refreshToken');
+            navigation.replace('LoginScreen');
         }
     };
 
